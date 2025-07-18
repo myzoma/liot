@@ -359,16 +359,19 @@ body {
 
 .modal-content {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    margin: 2% auto;
+    aspect-ratio: 1 / 1; /* <== يجعلها مربعة */
+    width: 90vw;
+    max-width: 800px;
+    max-height: 90vh;
+    margin: auto;
+    overflow: hidden auto;
     padding: 0;
     border: 2px solid var(--primary-color);
     border-radius: 15px;
-    width: 95%;
-    max-width: 1200px;
-    max-height: 90vh;
-    overflow-y: auto;
     box-shadow: 0 10px 50px rgba(0, 212, 170, 0.3);
     animation: modalSlideIn 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 
@@ -454,10 +457,13 @@ body {
 /* تصميم شبكي للمحتوى */
 .recommendation-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    color: var(--text-primary);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* مربعة ومتكيفة */
+    gap: 1rem;
+    padding: 1rem;
+    flex-grow: 1;
+    overflow-y: auto;
 }
+
 
 .recommendation-card {
     background: rgba(0, 212, 170, 0.05);
