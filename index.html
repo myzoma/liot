@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تحليل موجات إليوت - بيانات Binance</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; direction: rtl; }
+    h2 { color: #1e88e5; }
+    pre { background: #fff; padding: 15px; border-radius: 8px; max-height: 500px; overflow: auto; direction: ltr; }
+  </style>
+</head>
+<body>
+  <h2>تحليل موجات إليوت من Binance</h2>
+  <pre id="output">جاري التحميل والتحليل...</pre>
+
+  <!-- كلاس ElliottWave -->
+  <script src="elliott-wave.js"></script>
+
+  <script>
+    async function fetchKlines(symbol = 'BTCUSDT', interval = '1h', limit = 100) {
+      const url = `https://api1.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.map(k => [
+        k[0],  // time
+        k[1],  // open
+        k[2],  // high
+        k[3],  // low
+        k[4],  // close
+        k[5]   // volume
+      ]);
+    }
+
+    async function runAnalysis() {
+      try {
+        const klineData = await fetchKlines('BTCUSDT', '1h', 120); // عملة وفاصل زمني
+        const analyzer = new ElliottWaveAnalyzer();
+        const result = analyzer.analyze(klineData);
+        document.getElementById("output").textContent = JSON.stringify(result.summary, null, 2);
+      } catch (e) {
+        document.getElementById("output").textContent = 'فشل في تحميل البيانات: ' + e.message;
+      }
+    }
+
+    runAnalysis();
+  </script>
+</body>
+</html>
