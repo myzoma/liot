@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>تحليل موجات إليوت مع الشارت</title>
+    <style>
+        body { background:#222; color:#fff; font-family:tahoma; text-align:center }
+        canvas { background:#111; margin:20px auto; display:block; border-radius:12px; }
+        .results { margin: 24px auto; width: 800px; text-align: left; background:#1a1a2e; border-radius:10px; padding:20px; }
+        .wave-label { font-weight:bold; font-size:18px; }
+        .error { color:#ff4757; margin-top:20px; }
+    </style>
+</head>
+<body>
+    <h2>تحليل موجات إليوت وعرضها على الشارت</h2>
+    <canvas id="elliottChart" width="800" height="400"></canvas>
+    <div id="analysisResult" class="results"></div>
+    <script src="elliott-wave.js"></script>
+    <script>
+        // بيانات أسعار تجريبية (يمكنك استبدالها ببيانات حقيقية أو بيانات Binance)
+        const klineData = [
+            [1, "100", "105", "99", "104", "1500"],
+            [2, "104", "108", "103", "107", "1700"],
+            [3, "107", "109", "105", "106", "1600"],
+            [4, "106", "110", "104", "110", "1800"],
+            [5, "110", "115", "109", "114", "2000"],
+            [6, "114", "116", "111", "112", "1900"],
+            [7, "112", "113", "110", "111", "1200"],
+            [8, "111", "115", "109", "114", "1400"],
+            [9, "114", "117", "112", "116", "1700"],
+            [10, "116", "119", "115", "118", "1800"],
+            [11, "118", "120", "117", "119", "1600"],
+            [12, "119", "122", "118", "121", "1850"],
+            [13, "121", "123", "120", "122", "1750"],
+            [14, "122", "124", "121", "123", "1600"],
+            [15, "123", "126", "122", "125", "1900"],
+            [16, "125", "128", "124", "127", "2000"],
+            [17, "127", "130", "126", "129", "2100"],
+            [18, "129", "132", "128", "131", "2200"],
+            [19, "131", "134", "130", "133", "2300"],
+            [20, "133", "136", "132", "135", "2400"]
+        ];
+
+        // استخدم المحلل
+        const analyzer = new ElliottWaveAnalyzer();
+        const analysis = analyzer.analyze(klineData);
+
+        // رسم الشارت
+        function drawChart(kline, analysis) {
+            const canvas = document.getElementById('elliottChart');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height, pad = 50;
+
+            // استخراج أسعار الإغلاق
+            const closes = kline.map(k => parseFloat(k[4]));
+            const minP = Math.min(...closes), maxP = Math.max(...closes);
+            const xStep = (w - 2*pad) / (closes.length - 1);
+
+            // رسم المحور
+            ctx.clearRect(0,0,w,h);
+            ctx.strokeStyle = "#444";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(pad, h - pad);
+            ctx.lineTo(w - pad, h - pad);
+            ctx.moveTo(pad, pad);
+            ctx.lineTo(pad, h - pad);
+            ctx.stroke();
+
+            // رسم السعر
+            ctx.strokeStyle = "#00d4aa";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            closes.forEach((price, i) => {
+                const x = pad + i*xStep;
+                const y = pad + (h - 2*pad) * (1 - (price - minP) / (maxP - minP));
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // رسم نقاط الموجة وترقيمها
+            if (analysis.patterns && analysis.patterns.length > 0) {
+                const pattern = analysis.patterns[0];
+                pattern.points.forEach((pt, idx) => {
+                    const x = pad + pt.index*xStep;
+                    const y = pad + (h - 2*pad) * (1 - (pt.price - minP) / (maxP - minP));
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, 10, 0, 2*Math.PI);
+                    ctx.fillStyle = pattern.type === 'motive' ? "#ff4757" : "#ffa502";
+                    ctx.fill();
+
+                    ctx.font = "bold 18px Arial";
+                    ctx.fillStyle = "#fff";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    const label = pattern.type === "motive" ? (idx+1) : String.fromCharCode(65+idx); // 1,2,3... أو A,B,C...
+                    ctx.fillText(label, x, y);
+
+                    // رسم خط بين النقاط
+                    if (idx > 0) {
+                        const prevPt = pattern.points[idx-1];
+                        const px = pad + prevPt.index*xStep;
+                        const py = pad + (h - 2*pad) * (1 - (prevPt.price - minP) / (maxP - minP));
+                        ctx.strokeStyle = "#fff";
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo(px, py);
+                        ctx.lineTo(x, y);
+                        ctx.stroke();
+                    }
+                });
+            }
+        }
+
+        drawChart(klineData, analysis);
+
+        // عرض النتائج النصية والتحليل
+        function showAnalysis(analysis) {
+            const div = document.getElementById("analysisResult");
+            if (!analysis || !analysis.patterns || analysis.patterns.length === 0)
+                return div.innerHTML = '<div class="error">لم يتم العثور على نمط موجات إليوت صالح في البيانات.</div>';
+
+            const pattern = analysis.patterns[0];
+            let html = `
+                <h3>نتيجة التحليل:</h3>
+                <p><span class="wave-label">النمط:</span> ${pattern.type === 'motive' ? 'دافع (1-2-3-4-5)' : 'تصحيحي (A-B-C)'}</p>
+                <p><span class="wave-label">الاتجاه:</span> ${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}</p>
+                <p><span class="wave-label">الثقة:</span> ${pattern.confidence}%</p>
+                <p><span class="wave-label">موجات التحليل:</span> ${pattern.points.map((pt, idx) => pattern.type === 'motive' ? (idx+1) : String.fromCharCode(65+idx)).join(' - ')}</p>
+                <p><span class="wave-label">الهدف المتوقع:</span> $${pattern.targets.finalTarget.toFixed(2)}</p>
+                <p><span class="wave-label">مستوى الدعم:</span> $${pattern.targets.support.toFixed(2)} | <span class="wave-label">مستوى المقاومة:</span> $${pattern.targets.resistance.toFixed(2)}</p>
+                <hr>
+                <p><span class="wave-label">التوصية:</span> ${
+                    analysis.recommendations && analysis.recommendations.length > 0 ?
+                    analysis.recommendations[0].message : 'لا توجد توصية واضحة حالياً'
+                }</p>
+                <p><span class="wave-label">الملخص:</span> ${analysis.summary}</p>
+            `;
+            div.innerHTML = html;
+        }
+        showAnalysis(analysis);
+    </script>
+</body>
+</html>
