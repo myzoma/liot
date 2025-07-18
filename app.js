@@ -678,11 +678,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// تهيئة التطبيق
-let radar;
-document.addEventListener('DOMContentLoaded', () => {
-    radar = new ElliottWaveRadar();
-});
 
 // إضافة وظائف مساعدة للنافذة العامة
 window.addEventListener('load', () => {
