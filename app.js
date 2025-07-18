@@ -577,15 +577,16 @@ getBestEntryTime(pattern) {
 
 
     
- formatRecommendation(result) {
+formatRecommendation(result) {
     const { symbol, pattern, targets, recommendation, wave, strategy = {}, waveAnalysis = {} } = result;
 
     const entryPrice = typeof recommendation.entry === 'number'
         ? recommendation.entry
         : parseFloat(recommendation.entry) || 0;
 
-    const line = (label, value) => value ? `• ${label}: ${value}` : '';
-    const dollarLine = (label, value) => (value ? `• ${label}: $${parseFloat(value).toFixed(4)}` : '');
+    const line = (label, value) => value && value !== 'غير معروف' ? `• ${label}: ${value}` : '';
+    const dollarLine = (label, value) =>
+        value && !isNaN(parseFloat(value)) ? `• ${label}: $${parseFloat(value).toFixed(4)}` : '';
 
     return `
 🔥 توصية تداول - ${symbol}
