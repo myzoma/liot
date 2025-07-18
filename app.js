@@ -578,55 +578,89 @@ getBestEntryTime(pattern) {
 
     
 formatRecommendation(result) {
-    const { symbol, pattern, targets, recommendation, wave, strategy = {}, waveAnalysis = {} } = result;
+    const { symbol, pattern, targets, recommendation, wave, waveAnalysis = {}, strategy = {} } = result;
 
-    const entryPrice = typeof recommendation.entry === 'number'
-        ? recommendation.entry
-        : parseFloat(recommendation.entry) || 0;
-
-    const line = (label, value) => value && value !== 'غير معروف' ? `• ${label}: ${value}` : '';
-    const dollarLine = (label, value) =>
-        value && !isNaN(parseFloat(value)) ? `• ${label}: $${parseFloat(value).toFixed(4)}` : '';
+    const entry = parseFloat(recommendation.entry) || 0;
 
     return `
-🔥 توصية تداول - ${symbol}
-
 📊 التحليل الفني
-${line('النمط', this.translatePattern(pattern.type))}
-${line('الاتجاه', pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉')}
-${line('مستوى الثقة', `${pattern.confidence}%`)}
-${line('الموجة الحالية', this.translateWave(wave?.currentWave || ''))}
+النمط:
+${this.translatePattern(pattern.type)}
+
+الاتجاه:
+${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}
+
+مستوى الثقة:
+${pattern.confidence}%
+
+الموجة الحالية:
+${this.translateWave(wave?.currentWave)}
 
 💡 توصية التداول
-${line('الإجراء', recommendation.action)}
-${dollarLine('نقطة الدخول', entryPrice)}
-${line('الإطار الزمني', recommendation.timeframe)}
-${line('مستوى المخاطرة', recommendation.riskLevel)}
+الإجراء:
+${recommendation.action}
+
+نقطة الدخول:
+$${entry.toFixed(4)}
+
+الإطار الزمني:
+${recommendation.timeframe}
+
+مستوى المخاطرة:
+${recommendation.riskLevel}
 
 🎯 الأهداف السعرية
-${dollarLine('الهدف الأول', targets.target1)}
-${dollarLine('الهدف الثاني', targets.target2)}
-${dollarLine('الهدف الثالث', targets.target3)}
-${dollarLine('وقف الخسارة', targets.stopLoss)}
+🎯 الهدف الأول:
+$${parseFloat(targets.target1).toFixed(4)}
+
+🎯 الهدف الثاني:
+$${parseFloat(targets.target2).toFixed(4)}
+
+🎯 الهدف الثالث:
+$${parseFloat(targets.target3).toFixed(4)}
+
+🛑 وقف الخسارة:
+$${parseFloat(targets.stopLoss).toFixed(4)}
 
 🔍 تحليل الموجة التفصيلي
-${line('الموجة الحالية', this.translateWave(wave?.currentWave || ''))}
-${line('المرحلة', waveAnalysis.phase)}
-${line('التوقع القادم', waveAnalysis.nextExpectation)}
-${line('نوع الدورة', waveAnalysis.cycleType)}
-${line('قوة الموجة', waveAnalysis.waveStrength)}
-${line('الموجة المتوقعة التالية', waveAnalysis.nextWave)}
+الموجة الحالية:
+${this.translateWave(wave?.currentWave)}
+
+المرحلة:
+${waveAnalysis.phase}
+
+التوقع القادم:
+${waveAnalysis.nextExpectation}
+
+نوع الدورة:
+${waveAnalysis.cycleType}
+
+قوة الموجة:
+${waveAnalysis.waveStrength}
+
+الموجة المتوقعة التالية:
+${waveAnalysis.nextWave}
 
 📈 استراتيجية التداول
-${dollarLine('نقطة الدخول المثلى', entryPrice)}
-${line('حجم المركز المقترح', strategy.positionSize)}
-${line('نسبة المخاطرة/العائد', strategy.riskReward)}
-${line('مدة الصفقة المتوقعة', strategy.expectedDuration)}
-${line('أفضل وقت للدخول', strategy.bestEntryTime)}
+نقطة الدخول المثلى:
+$${entry.toFixed(4)}
 
-#ElliottWave #Crypto #Yaser
+حجم المركز المقترح:
+${strategy.positionSize}
+
+نسبة المخاطرة/العائد:
+${strategy.riskReward}
+
+مدة الصفقة المتوقعة:
+${strategy.expectedDuration}
+
+أفضل وقت للدخول:
+${strategy.bestEntryTime}
+
+#ElliottWave #Crypto #توصيات_فنية
     `.trim();
 }
+
 
 
 
