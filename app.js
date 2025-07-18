@@ -48,6 +48,11 @@ class ElliottWaveRadar {
     }
 
     initChart() {
+        // تدمير المخطط السابق إذا كان موجوداً
+        if (this.chart) {
+            this.chart.destroy();
+        }
+
         const ctx = document.getElementById('signalsChart').getContext('2d');
         this.chart = new Chart(ctx, {
             type: 'doughnut',
@@ -144,9 +149,9 @@ class ElliottWaveRadar {
     }
 
     calculateTargets(data, pattern) {
-        const currentPrice = data[data.length - 1][4];
-        const high = Math.max(...data.slice(-20).map(d => d[2]));
-        const low = Math.min(...data.slice(-20).map(d => d[3]));
+        const currentPrice = parseFloat(data[data.length - 1][4]);
+        const high = Math.max(...data.slice(-20).map(d => parseFloat(d[2])));
+        const low = Math.min(...data.slice(-20).map(d => parseFloat(d[3])));
         
         let targets = {};
         
@@ -166,13 +171,13 @@ class ElliottWaveRadar {
     }
 
     generateRecommendation(pattern, trend, data) {
-        const currentPrice = data[data.length - 1][4];
+        const currentPrice = parseFloat(data[data.length - 1][4]);
         const direction = pattern.direction === 'bullish' ? 'شراء' : 'بيع';
         const confidence = pattern.confidence;
         
         return {
             action: direction,
-            entry: currentPrice,
+            entry: currentPrice, // تأكد من أنه رقم
             confidence: confidence,
             timeframe: '1h - 4h',
             riskLevel: confidence > 85 ? 'منخفض' : confidence > 75 ? 'متوسط' : 'عالي'
@@ -183,9 +188,9 @@ class ElliottWaveRadar {
         this.stats.total = this.results.length;
         this.stats.bullish = this.results.filter(r => r.pattern.direction === 'bullish').length;
         this.stats.bearish = this.results.filter(r => r.pattern.direction === 'bearish').length;
-        this.stats.avgConfidence = Math.round(
+        this.stats.avgConfidence = this.results.length > 0 ? Math.round(
             this.results.reduce((sum, r) => sum + r.pattern.confidence, 0) / this.results.length
-        );
+        ) : 0;
 
         // Update DOM
         document.getElementById('totalSymbols').textContent = this.stats.total;
@@ -194,12 +199,14 @@ class ElliottWaveRadar {
         document.getElementById('avgConfidence').textContent = `${this.stats.avgConfidence}%`;
 
         // Update chart
-        this.chart.data.datasets[0].data = [
-            this.stats.bullish,
-            this.stats.bearish,
-            this.stats.total - this.stats.bullish - this.stats.bearish
-        ];
-        this.chart.update();
+        if (this.chart) {
+            this.chart.data.datasets[0].data = [
+                this.stats.bullish,
+                this.stats.bearish,
+                this.stats.total - this.stats.bullish - this.stats.bearish
+            ];
+            this.chart.update();
+        }
     }
 
     renderCard(result) {
@@ -246,7 +253,7 @@ class ElliottWaveRadar {
                 <p>التوقع: ${this.getWaveExpectation(pattern, wave)}</p>
             </div>
             
-            <button class="recommendation-btn" onclick="radar.showRecommendation('${symbol}')">
+            <button class="recommendation-btn" onclick="window.radar.showRecommendation('${symbol}')">
                 <i class="fa-solid fa-lightbulb"></i>
                 عرض التوصية الكاملة
             </button>
@@ -262,6 +269,10 @@ class ElliottWaveRadar {
         const { pattern, targets, recommendation, wave } = result;
         const modal = document.getElementById('recommendationModal');
         const modalBody = document.getElementById('modalBody');
+        
+        // التأكد من أن entry هو رقم
+        const entryPrice = typeof recommendation.entry === 'number' ? 
+            recommendation.entry : parseFloat(recommendation.entry) || 0;
         
         const recommendationText = this.formatRecommendation(result);
         
@@ -280,7 +291,7 @@ class ElliottWaveRadar {
                 <div class="recommendation-section">
                     <h4><i class="fa-solid fa-bullseye"></i> توصية التداول</h4>
                     <p><strong>الإجراء:</strong> ${recommendation.action}</p>
-                    <p><strong>نقطة الدخول:</strong> $${recommendation.entry.toFixed(4)}</p>
+                    <p><strong>نقطة الدخول:</strong> $${entryPrice.toFixed(4)}</p>
                     <p><strong>الإطار الزمني:</strong> ${recommendation.timeframe}</p>
                     <p><strong>مستوى المخاطرة:</strong> ${recommendation.riskLevel}</p>
                 </div>
@@ -302,13 +313,16 @@ class ElliottWaveRadar {
                 </div>
             </div>
         `;
-        
         modal.style.display = 'block';
         modal.dataset.recommendationText = recommendationText;
     }
 
     formatRecommendation(result) {
         const { symbol, pattern, targets, recommendation, wave } = result;
+        
+        // التأكد من أن entry هو رقم
+        const entryPrice = typeof recommendation.entry === 'number' ? 
+            recommendation.entry : parseFloat(recommendation.entry) || 0;
         
         return `
 🔥 توصية تداول - ${symbol}
@@ -321,7 +335,7 @@ class ElliottWaveRadar {
 
 💡 التوصية:
 • الإجراء: ${recommendation.action}
-• نقطة الدخول: $${recommendation.entry.toFixed(4)}
+• نقطة الدخول: $${entryPrice.toFixed(4)}
 • الإطار الزمني: ${recommendation.timeframe}
 • مستوى المخاطرة: ${recommendation.riskLevel}
 
@@ -395,7 +409,9 @@ class ElliottWaveRadar {
         setTimeout(() => {
             notification.style.animation = 'slideOutRight 0.3s ease';
             setTimeout(() => {
-                document.body.removeChild(notification);
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
             }, 300);
         }, 3000);
     }
@@ -457,8 +473,11 @@ class ElliottWaveRadar {
                     
                     // تحديث شريط التقدم
                     const progress = Math.round(((i + 1) / this.symbols.length) * 100);
-                    loadingElement.querySelector('p').textContent = 
-                        `🔄 تم تحليل ${i + 1} من ${this.symbols.length} عملة (${progress}%)`;
+                    const loadingP = loadingElement.querySelector('p');
+                    if (loadingP) {
+                        loadingP.textContent = 
+                            `🔄 تم تحليل ${i + 1} من ${this.symbols.length} عملة (${progress}%)`;
+                    }
                     
                     // إخفاء شاشة التحميل عند الانتهاء
                     if (i === this.symbols.length - 1) {
@@ -666,7 +685,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // إضافة وظائف مساعدة للنافذة العامة
-window.radar = null;
 window.addEventListener('load', () => {
     if (!window.radar) {
         window.radar = new ElliottWaveRadar();
