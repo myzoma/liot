@@ -578,6 +578,9 @@ getBestEntryTime(pattern) {
 
     
 formatRecommendation(result) {
+    console.log("Full result:", result);
+    console.log("waveAnalysis:", result.waveAnalysis);
+    console.log("strategy:", result.strategy);
     const { symbol, pattern, targets, recommendation, wave, waveAnalysis = {}, strategy = {} } = result;
 
     const entry = parseFloat(recommendation.entry) || 0;
