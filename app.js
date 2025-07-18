@@ -90,7 +90,7 @@ class ElliottWaveRadar {
 
     async fetchTopSymbols(limit = 100) {
         try {
-            const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+            const res = await fetch('https://api1.binance.com/api/v3/ticker/24hr');
             const data = await res.json();
             return data
                 .filter(d => d.symbol.endsWith('USDT') && 
@@ -107,7 +107,7 @@ class ElliottWaveRadar {
 
     async fetchKlines(symbol, interval = '1h', limit = 120) {
         try {
-            const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+            const url = `https://api1.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
             const res = await fetch(url);
             const data = await res.json();
             return data.map(k => [k[0], k[1], k[2], k[3], k[4], k[5]]);
