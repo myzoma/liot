@@ -3,7 +3,6 @@ class ElliottWaveRadar {
         this.symbols = [];
         this.results = [];
         this.chart = null;
-        this.isInitialized = false;
         this.stats = {
             total: 0,
             bullish: 0,
@@ -17,7 +16,6 @@ class ElliottWaveRadar {
         this.setupEventListeners();
         this.initChart();
         this.runRadar();
-        this.isInitialized = true;
     }
 
     setupEventListeners() {
@@ -31,20 +29,14 @@ class ElliottWaveRadar {
         });
 
         // Modal close
-        const closeBtn = document.querySelector('.close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                document.getElementById('recommendationModal').style.display = 'none';
-            });
-        }
+        document.querySelector('.close').addEventListener('click', () => {
+            document.getElementById('recommendationModal').style.display = 'none';
+        });
 
         // Copy recommendation
-        const copyBtn = document.getElementById('copyRecommendation');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => {
-                this.copyRecommendation();
-            });
-        }
+        document.getElementById('copyRecommendation').addEventListener('click', () => {
+            this.copyRecommendation();
+        });
 
         // Close modal on outside click
         window.addEventListener('click', (e) => {
@@ -56,25 +48,7 @@ class ElliottWaveRadar {
     }
 
     initChart() {
-        // تدمير المخطط السابق إذا كان موجوداً
-        if (this.chart) {
-            this.chart.destroy();
-            this.chart = null;
-        }
-
-        const canvas = document.getElementById('signalsChart');
-        if (!canvas) {
-            console.error('Canvas element not found');
-            return;
-        }
-
-        // التأكد من أن Canvas غير مستخدم
-        const existingChart = Chart.getChart(canvas);
-        if (existingChart) {
-            existingChart.destroy();
-        }
-
-        const ctx = canvas.getContext('2d');
+        const ctx = document.getElementById('signalsChart').getContext('2d');
         this.chart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -114,9 +88,9 @@ class ElliottWaveRadar {
             const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
             const data = await res.json();
             return data
-                .filter(d => d.symbol.endsWith('USDT') &&
-                            !d.symbol.includes('UP') &&
-                            !d.symbol.includes('DOWN'))
+                .filter(d => d.symbol.endsWith('USDT') && 
+                           !d.symbol.includes('UP') && 
+                           !d.symbol.includes('DOWN'))
                 .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
                 .slice(0, limit)
                 .map(d => d.symbol);
@@ -170,9 +144,9 @@ class ElliottWaveRadar {
     }
 
     calculateTargets(data, pattern) {
-        const currentPrice = parseFloat(data[data.length - 1][4]);
-        const high = Math.max(...data.slice(-20).map(d => parseFloat(d[2])));
-        const low = Math.min(...data.slice(-20).map(d => parseFloat(d[3])));
+        const currentPrice = data[data.length - 1][4];
+        const high = Math.max(...data.slice(-20).map(d => d[2]));
+        const low = Math.min(...data.slice(-20).map(d => d[3]));
         
         let targets = {};
         
@@ -192,7 +166,7 @@ class ElliottWaveRadar {
     }
 
     generateRecommendation(pattern, trend, data) {
-        const currentPrice = parseFloat(data[data.length - 1][4]);
+        const currentPrice = data[data.length - 1][4];
         const direction = pattern.direction === 'bullish' ? 'شراء' : 'بيع';
         const confidence = pattern.confidence;
         
@@ -209,36 +183,27 @@ class ElliottWaveRadar {
         this.stats.total = this.results.length;
         this.stats.bullish = this.results.filter(r => r.pattern.direction === 'bullish').length;
         this.stats.bearish = this.results.filter(r => r.pattern.direction === 'bearish').length;
-        this.stats.avgConfidence = this.results.length > 0 ? Math.round(
+        this.stats.avgConfidence = Math.round(
             this.results.reduce((sum, r) => sum + r.pattern.confidence, 0) / this.results.length
-        ) : 0;
+        );
 
         // Update DOM
-        const totalEl = document.getElementById('totalSymbols');
-        const bullishEl = document.getElementById('bullishCount');
-        const bearishEl = document.getElementById('bearishCount');
-        const avgEl = document.getElementById('avgConfidence');
-
-        if (totalEl) totalEl.textContent = this.stats.total;
-        if (bullishEl) bullishEl.textContent = this.stats.bullish;
-        if (bearishEl) bearishEl.textContent = this.stats.bearish;
-        if (avgEl) avgEl.textContent = `${this.stats.avgConfidence}%`;
+        document.getElementById('totalSymbols').textContent = this.stats.total;
+        document.getElementById('bullishCount').textContent = this.stats.bullish;
+        document.getElementById('bearishCount').textContent = this.stats.bearish;
+        document.getElementById('avgConfidence').textContent = `${this.stats.avgConfidence}%`;
 
         // Update chart
-        if (this.chart) {
-            this.chart.data.datasets[0].data = [
-                this.stats.bullish,
-                this.stats.bearish,
-                this.stats.total - this.stats.bullish - this.stats.bearish
-            ];
-            this.chart.update();
-        }
+        this.chart.data.datasets[0].data = [
+            this.stats.bullish,
+            this.stats.bearish,
+            this.stats.total - this.stats.bullish - this.stats.bearish
+        ];
+        this.chart.update();
     }
 
     renderCard(result) {
         const container = document.getElementById("results");
-        if (!container) return;
-
         const { symbol, pattern, trend, wave, targets, recommendation } = result;
         
         const trendIcon = pattern.direction === 'bullish' ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger';
@@ -253,14 +218,14 @@ class ElliottWaveRadar {
         card.innerHTML = `
             <h2><i class="fa-solid fa-coins"></i> ${symbol}</h2>
             
-            <p><i class="fa-solid fa-chart-line"></i> النمط: ${this.translatePattern(pattern.type)}
-                <span class="${pattern.direction === 'bullish' ? 'text-success' : 'text-danger'}">
+            <p><i class="fa-solid fa-chart-line"></i> النمط: ${this.translatePattern(pattern.type)} 
+               <span class="${pattern.direction === 'bullish' ? 'text-success' : 'text-danger'}">
                    ${pattern.direction === 'bullish' ? '🚀 صاعد' : '📉 هابط'}
                </span>
             </p>
             
-            <p><i class="fa-solid fa-shield-halved"></i> الثقة:
-                <span class="confidence ${confidenceClass}">${pattern.confidence}%</span>
+            <p><i class="fa-solid fa-shield-halved"></i> الثقة: 
+               <span class="confidence ${confidenceClass}">${pattern.confidence}%</span>
             </p>
             
             <p><i class="fa-solid fa-location-crosshairs"></i> الموجة الحالية: ${waveText}</p>
@@ -281,17 +246,11 @@ class ElliottWaveRadar {
                 <p>التوقع: ${this.getWaveExpectation(pattern, wave)}</p>
             </div>
             
-            <button class="recommendation-btn" data-symbol="${symbol}">
+            <button class="recommendation-btn" onclick="radar.showRecommendation('${symbol}')">
                 <i class="fa-solid fa-lightbulb"></i>
                 عرض التوصية الكاملة
             </button>
         `;
-        
-        // إضافة event listener للزر
-        const btn = card.querySelector('.recommendation-btn');
-        btn.addEventListener('click', () => {
-            this.showRecommendation(symbol);
-        });
         
         container.appendChild(card);
     }
@@ -304,313 +263,55 @@ class ElliottWaveRadar {
         const modal = document.getElementById('recommendationModal');
         const modalBody = document.getElementById('modalBody');
         
-        if (!modal || !modalBody) return;
-
-        // التأكد من أن entry هو رقم
-        const entryPrice = typeof recommendation.entry === 'number' ? 
-            recommendation.entry : parseFloat(recommendation.entry) || 0;
-        
         const recommendationText = this.formatRecommendation(result);
-        
-        // إضافة header للنافذة مع زر الإغلاق
-        let modalHeader = modal.querySelector('.modal-header');
-        if (!modalHeader) {
-            modalHeader = document.createElement('div');
-            modalHeader.className = 'modal-header';
-            modal.querySelector('.modal-content').insertBefore(modalHeader, modalBody);
-        }
-        
-        modalHeader.innerHTML = `
-            <div class="modal-title">
-                <i class="fa-solid fa-coins"></i>
-                توصية تداول - ${symbol}
-            </div>
-            <button class="modal-close-btn" onclick="document.getElementById('recommendationModal').style.display='none'">
-                <i class="fa-solid fa-times"></i>
-            </button>
-        `;
         
         modalBody.innerHTML = `
             <div class="recommendation-content">
-                <!-- بطاقة التحليل الفني -->
-                <div class="recommendation-card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <h4>التحليل الفني</h4>
-                    </div>
-                    <div class="card-content">
-                        <p>
-                            <strong>النمط:</strong>
-                            <span class="value">${this.translatePattern(pattern.type)}</span>
-                        </p>
-                        <p>
-                            <strong>الاتجاه:</strong>
-                            <span class="value ${pattern.direction === 'bullish' ? 'bullish' : 'bearish'}">
-                                ${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}
-                            </span>
-                        </p>
-                        <p>
-                            <strong>مستوى الثقة:</strong>
-                            <span class="value">${pattern.confidence}%</span>
-                        </p>
-                        <p>
-                            <strong>الموجة الحالية:</strong>
-                            <span class="value">${this.translateWave(wave?.currentWave || 'unknown')}</span>
-                        </p>
-                    </div>
+                <h3><i class="fa-solid fa-coins"></i> ${symbol}</h3>
+                
+                <div class="recommendation-section">
+                    <h4><i class="fa-solid fa-chart-line"></i> تحليل فني</h4>
+                    <p><strong>النمط:</strong> ${this.translatePattern(pattern.type)}</p>
+                    <p><strong>الاتجاه:</strong> ${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}</p>
+                    <p><strong>مستوى الثقة:</strong> ${pattern.confidence}%</p>
+                    <p><strong>الموجة الحالية:</strong> ${this.translateWave(wave?.currentWave || 'unknown')}</p>
                 </div>
-                <!-- بطاقة التوصية -->
-                <div class="recommendation-card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-bullseye"></i>
-                        <h4>توصية التداول</h4>
-                    </div>
-                    <div class="card-content">
-                        <p>
-                            <strong>الإجراء:</strong>
-                            <span class="value ${recommendation.action === 'شراء' ? 'bullish' : 'bearish'}">
-                                ${recommendation.action}
-                            </span>
-                        </p>
-                        <p>
-                            <strong>نقطة الدخول:</strong>
-                            <span class="value">$${entryPrice.toFixed(4)}</span>
-                        </p>
-                        <p>
-                            <strong>الإطار الزمني:</strong>
-                            <span class="value">${recommendation.timeframe}</span>
-                        </p>
-                        <p>
-                            <strong>مستوى المخاطرة:</strong>
-                            <span class="value">${recommendation.riskLevel}</span>
-                        </p>
-                    </div>
+                
+                <div class="recommendation-section">
+                    <h4><i class="fa-solid fa-bullseye"></i> توصية التداول</h4>
+                    <p><strong>الإجراء:</strong> ${recommendation.action}</p>
+                    <p><strong>نقطة الدخول:</strong> $${recommendation.entry.toFixed(4)}</p>
+                    <p><strong>الإطار الزمني:</strong> ${recommendation.timeframe}</p>
+                    <p><strong>مستوى المخاطرة:</strong> ${recommendation.riskLevel}</p>
                 </div>
-                <!-- بطاقة الأهداف -->
-                <div class="recommendation-card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-target"></i>
-                        <h4>الأهداف السعرية</h4>
-                    </div>
-                    <div class="card-content">
-                        <p>
-                            <strong>🎯 الهدف الأول:</strong>
-                            <span class="value bullish">$${targets.target1.toFixed(4)}</span>
-                        </p>
-                        <p>
-                            <strong>🎯 الهدف الثاني:</strong>
-                            <span class="value bullish">$${targets.target2.toFixed(4)}</span>
-                        </p>
-                        <p>
-                            <strong>🎯 الهدف الثالث:</strong>
-                            <span class="value bullish">$${targets.target3.toFixed(4)}</span>
-                        </p>
-                        <p>
-                            <strong>🛑 وقف الخسارة:</strong>
-                            <span class="value bearish">$${targets.stopLoss.toFixed(4)}</span>
-                        </p>
-                    </div>
+                
+                <div class="recommendation-section">
+                    <h4><i class="fa-solid fa-target"></i> الأهداف ووقف الخسارة</h4>
+                    <p><strong>🎯 الهدف الأول:</strong> $${targets.target1.toFixed(4)}</p>
+                    <p><strong>🎯 الهدف الثاني:</strong> $${targets.target2.toFixed(4)}</p>
+                    <p><strong>🎯 الهدف الثالث:</strong> $${targets.target3.toFixed(4)}</p>
+                    <p><strong>🛑 وقف الخسارة:</strong> $${targets.stopLoss.toFixed(4)}</p>
                 </div>
-                <!-- بطاقة تحليل الموجة المفصل -->
-                <div class="recommendation-card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-wave-square"></i>
-                        <h4>تحليل الموجة التفصيلي</h4>
-                    </div>
-                    <div class="card-content">
-                        <p>
-                            <strong>الموجة الحالية:</strong>
-                            <span class="value">${this.translateWave(wave?.currentWave || 'unknown')}</span>
-                        </p>
-                        <p>
-                            <strong>المرحلة:</strong>
-                            <span class="value">${this.getWavePhase(wave)}</span>
-                        </p>
-                        <p>
-                            <strong>التوقع القادم:</strong>
-                            <span class="value">${this.getWaveExpectation(pattern, wave)}</span>
-                        </p>
-                        <p>
-                            <strong>نوع الدورة:</strong>
-                            <span class="value">${this.getWaveCycle(wave, pattern)}</span>
-                        </p>
-                        <p>
-                            <strong>قوة الموجة:</strong>
-                            <span class="value ${this.getWaveStrength(pattern) > 75 ? 'bullish' : 'bearish'}">
-                                ${this.getWaveStrength(pattern)}%
-                            </span>
-                        </p>
-                        <p>
-                            <strong>الموجة المتوقعة التالية:</strong>
-                            <span class="value">${this.getNextWave(wave?.currentWave, pattern)}</span>
-                        </p>
-                    </div>
-                </div>
-                <!-- بطاقة استراتيجية التداول -->
-                <div class="recommendation-card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-chess"></i>
-                        <h4>استراتيجية التداول</h4>
-                    </div>
-                    <div class="card-content">
-                        <p>
-                            <strong>نقطة الدخول المثلى:</strong>
-                            <span class="value">$${entryPrice.toFixed(4)}</span>
-                        </p>
-                        <p>
-                            <strong>حجم المركز المقترح:</strong>
-                            <span class="value">${this.getPositionSize(recommendation.riskLevel)}</span>
-                        </p>
-                        <p>
-                            <strong>نسبة المخاطرة/العائد:</strong>
-                            <span class="value bullish">${this.getRiskRewardRatio(entryPrice, targets)}</span>
-                        </p>
-                        <p>
-                            <strong>مدة الصفقة المتوقعة:</strong>
-                            <span class="value">${this.getTradeDuration(wave, pattern)}</span>
-                        </p>
-                        <p>
-                            <strong>أفضل وقت للدخول:</strong>
-                            <span class="value">${this.getBestEntryTime(pattern)}</span>
-                        </p>
-                    </div>
-                </div>
-                <!-- بطاقة التحذيرات -->
-                <div class="recommendation-card warning">
-                    <div class="card-header">
-                        <i class="fa-solid fa-exclamation-triangle"></i>
-                        <h4>تحذيرات مهمة</h4>
-                    </div>
-                    <div class="card-content">
-                        <p>• هذا التحليل مبني على نظرية موجات إليوت وليس نصيحة استثمارية</p>
-                        <p>• يُنصح بإجراء تحليل إضافي من مصادر متعددة قبل اتخاذ قرار التداول</p>
-                        <p>• استخدم إدارة المخاطر المناسبة ولا تخاطر بأكثر من 2% من رأس المال</p>
-                        <p>• راقب الأخبار والأحداث التي قد تؤثر على السوق</p>
-                        <p>• لا تستثمر أكثر مما يمكنك تحمل خسارته</p>
-                        <p>• قم بمراجعة وتحديث استراتيجيتك بانتظام</p>
-                    </div>
+                
+                <div class="recommendation-section">
+                    <h4><i class="fa-solid fa-exclamation-triangle"></i> تحذيرات مهمة</h4>
+                    <p>• هذا التحليل مبني على نظرية موجات إليوت وليس نصيحة استثمارية</p>
+                    <p>• يُنصح بإجراء تحليل إضافي قبل اتخاذ قرار التداول</p>
+                    <p>• استخدم إدارة المخاطر المناسبة</p>
+                    <p>• لا تستثمر أكثر مما يمكنك تحمل خسارته</p>
                 </div>
             </div>
         `;
-
-        // إضافة footer إذا لم يكن موجوداً
-        let modalFooter = modal.querySelector('.modal-footer');
-        if (!modalFooter) {
-            modalFooter = document.createElement('div');
-            modalFooter.className = 'modal-footer';
-            modalFooter.innerHTML = `
-                <button id="copyRecommendation" class="copy-btn">
-                    <i class="fa-solid fa-copy"></i>
-                    نسخ التوصية الكاملة
-                </button>
-                <button class="close-btn" onclick="document.getElementById('recommendationModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                    إغلاق
-                </button>
-            `;
-            modal.querySelector('.modal-content').appendChild(modalFooter);
-        }
-
+        
         modal.style.display = 'block';
         modal.dataset.recommendationText = recommendationText;
     }
 
-    // إضافة الدوال المساعدة الجديدة
-    getWaveCycle(wave, pattern) {
-        if (!wave || !wave.currentWave) return 'غير محدد';
-        
-        const currentWave = wave.currentWave;
-        if (['wave_1', 'wave_3', 'wave_5'].includes(currentWave)) {
-            return 'دورة دافعة (Impulse)';
-        } else if (['wave_2', 'wave_4'].includes(currentWave)) {
-            return 'دورة تصحيحية (Corrective)';
-        } else if (['wave_a', 'wave_b', 'wave_c'].includes(currentWave)) {
-            return 'دورة تصحيح ABC';
-        }
-        return 'دورة انتقالية';
-    }
-
-    getWaveStrength(pattern) {
-        return pattern.confidence || 0;
-    }
-
-    getNextWave(currentWave, pattern) {
-        if (!currentWave) return 'غير محدد';
-        
-        const waveSequence = {
-            'wave_1': 'الموجة الثانية (تصحيحية)',
-            'wave_2': 'الموجة الثالثة (دافعة قوية)',
-            'wave_3': 'الموجة الرابعة (تصحيحية)',
-            'wave_4': 'الموجة الخامسة (دافعة نهائية)',
-            'wave_5': 'الموجة A (بداية تصحيح)',
-            'wave_a': 'الموجة B (ارتداد)',
-            'wave_b': 'الموجة C (نهاية تصحيح)',
-            'wave_c': 'الموجة الأولى (دورة جديدة)'
-        };
-        
-        return waveSequence[currentWave] || 'موجة انتقالية';
-    }
-
-    getPositionSize(riskLevel) {
-        const sizes = {
-            'منخفض': '3-5% من رأس المال',
-            'متوسط': '2-3% من رأس المال',
-            'عالي': '1-2% من رأس المال'
-        };
-        return sizes[riskLevel] || '2% من رأس المال';
-    }
-
-    getRiskRewardRatio(entryPrice, targets) {
-        const target1 = targets.target1;
-        const stopLoss = targets.stopLoss;
-        
-        const reward = Math.abs(target1 - entryPrice);
-        const risk = Math.abs(entryPrice - stopLoss);
-        
-        if (risk === 0) return '1:1';
-        
-        const ratio = (reward / risk).toFixed(1);
-        return `1:${ratio}`;
-    }
-
-    getTradeDuration(wave, pattern) {
-        if (!wave || !wave.currentWave) return '1-3 أيام';
-        
-        const durations = {
-            'wave_1': '2-5 أيام',
-            'wave_2': '1-3 أيام',
-            'wave_3': '3-7 أيام',
-            'wave_4': '1-2 أيام',
-            'wave_5': '2-4 أيام',
-            'wave_a': '1-3 أيام',
-            'wave_b': '1-2 أيام',
-            'wave_c': '2-5 أيام'
-        };
-        
-        return durations[wave.currentWave] || '1-3 أيام';
-    }
-
-    getBestEntryTime(pattern) {
-        const times = [
-            'عند كسر مستوى المقاومة',
-            'عند إعادة اختبار الدعم',
-            'عند تأكيد النمط',
-            'عند زيادة الحجم',
-            'عند إغلاق الشمعة'
-        ];
-        
-        return times[Math.floor(Math.random() * times.length)];
-    }
-
-    // تحديث دالة formatRecommendation لتشمل تحليل الموجة
     formatRecommendation(result) {
         const { symbol, pattern, targets, recommendation, wave } = result;
         
-        // التأكد من أن entry هو رقم
-        const entryPrice = typeof recommendation.entry === 'number' ? 
-            recommendation.entry : parseFloat(recommendation.entry) || 0;
-        
-        return `🔥 توصية تداول - ${symbol}
+        return `
+🔥 توصية تداول - ${symbol}
 
 📊 التحليل الفني:
 • النمط: ${this.translatePattern(pattern.type)}
@@ -620,7 +321,7 @@ class ElliottWaveRadar {
 
 💡 التوصية:
 • الإجراء: ${recommendation.action}
-• نقطة الدخول: $${entryPrice.toFixed(4)}
+• نقطة الدخول: $${recommendation.entry.toFixed(4)}
 • الإطار الزمني: ${recommendation.timeframe}
 • مستوى المخاطرة: ${recommendation.riskLevel}
 
@@ -630,638 +331,344 @@ class ElliottWaveRadar {
 • الهدف الثالث: $${targets.target3.toFixed(4)}
 • وقف الخسارة: $${targets.stopLoss.toFixed(4)}
 
-🌊 تحليل الموجة التفصيلي:
-• الموجة الحالية: ${this.translateWave(wave?.currentWave || 'unknown')}
-• المرحلة: ${this.getWavePhase(wave)}
-• التوقع القادم: ${this.getWaveExpectation(pattern, wave)}
-• نوع الدورة: ${this.getWaveCycle(wave, pattern)}
-• قوة الموجة: ${this.getWaveStrength(pattern)}%
-• الموجة المتوقعة التالية: ${this.getNextWave(wave?.currentWave, pattern)}
+⚠️ تحذير: هذا التحليل لأغراض تعليمية وليس نصيحة استثمارية
 
-📈 استراتيجية التداول:
-• حجم المركز المقترح: ${this.getPositionSize(recommendation.riskLevel)}
-• نسبة المخاطرة/العائد: ${this.getRiskRewardRatio(entryPrice, targets)}
-• مدة الصفقة المتوقعة: ${this.getTradeDuration(wave, pattern)}
-• أفضل وقت للدخول: ${this.getBestEntryTime(pattern)}
-⚠️ تحذيرات مهمة:
-• هذا التحليل مبني على نظرية موجات إليوت وليس نصيحة استثمارية
-• يُنصح بإجراء تحليل إضافي من مصادر متعددة قبل اتخاذ قرار التداول
-• استخدم إدارة المخاطر المناسبة ولا تخاطر بأكثر من 2% من رأس المال
-• راقب الأخبار والأحداث التي قد تؤثر على السوق
-
-🕒 وقت التحليل: ${new Date().toLocaleString('ar-SA')}
-📱 Elliott Wave Radar - تحليل موجات إليوت المتقدم`;
+#ElliottWave #TechnicalAnalysis #Crypto
+        `.trim();
     }
 
-    // دالة نسخ التوصية
     copyRecommendation() {
         const modal = document.getElementById('recommendationModal');
-        const recommendationText = modal.dataset.recommendationText;
+        const text = modal.dataset.recommendationText;
         
-        if (recommendationText) {
-            navigator.clipboard.writeText(recommendationText).then(() => {
-                this.showNotification('تم نسخ التوصية بنجاح!', 'success');
-            }).catch(err => {
-                console.error('خطأ في نسخ النص:', err);
-                this.showNotification('فشل في نسخ التوصية', 'error');
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.showNotification('تم نسخ التوصية بنجاح! 📋', 'success');
+            }).catch(() => {
+                this.fallbackCopyText(text);
             });
-        }
-    }
-
-    // دالة إضافة الرمز للمفضلة
-    addToFavorites(symbol) {
-        let favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
-        
-        if (!favorites.includes(symbol)) {
-            favorites.push(symbol);
-            localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
-            this.showNotification(`تم إضافة ${symbol} للمفضلة`, 'success');
-            this.updateFavoritesDisplay();
         } else {
-            this.showNotification(`${symbol} موجود بالفعل في المفضلة`, 'info');
+            this.fallbackCopyText(text);
         }
     }
 
-    // دالة إزالة الرمز من المفضلة
-    removeFromFavorites(symbol) {
-        let favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
-        favorites = favorites.filter(fav => fav !== symbol);
-        localStorage.setItem('favoriteSymbols', JSON.stringify(favorites));
-        this.showNotification(`تم إزالة ${symbol} من المفضلة`, 'success');
-        this.updateFavoritesDisplay();
-    }
-
-    // دالة تحديث عرض المفضلة
-    updateFavoritesDisplay() {
-        const favoritesContainer = document.getElementById('favoritesList');
-        if (!favoritesContainer) return;
-
-        const favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
+    fallbackCopyText(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
         
-        if (favorites.length === 0) {
-            favoritesContainer.innerHTML = '<p class="no-favorites">لا توجد رموز مفضلة</p>';
-            return;
-        }
-
-        favoritesContainer.innerHTML = favorites.map(symbol => `
-            <div class="favorite-item">
-                <span class="symbol">${symbol}</span>
-                <div class="favorite-actions">
-                    <button onclick="elliottWaveRadar.analyzeSymbol('${symbol}')" class="analyze-btn">
-                        <i class="fa-solid fa-chart-line"></i>
-                        تحليل
-                    </button>
-                    <button onclick="elliottWaveRadar.removeFromFavorites('${symbol}')" class="remove-btn">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    // دالة حفظ التحليل
-    saveAnalysis(result) {
-        const analyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-        const analysis = {
-            id: Date.now(),
-            symbol: result.symbol,
-            timestamp: new Date().toISOString(),
-            pattern: result.pattern,
-            wave: result.wave,
-            recommendation: result.recommendation,
-            targets: result.targets
-        };
-        
-        analyses.unshift(analysis);
-        // الاحتفاظ بآخر 50 تحليل فقط
-        if (analyses.length > 50) {
-            analyses.splice(50);
+        try {
+            document.execCommand('copy');
+            this.showNotification('تم نسخ التوصية بنجاح! 📋', 'success');
+        } catch (err) {
+            this.showNotification('فشل في نسخ التوصية', 'error');
         }
         
-        localStorage.setItem('savedAnalyses', JSON.stringify(analyses));
-        this.showNotification('تم حفظ التحليل بنجاح', 'success');
-        this.updateSavedAnalysesDisplay();
+        document.body.removeChild(textArea);
     }
 
-    // دالة تحديث عرض التحاليل المحفوظة
-    updateSavedAnalysesDisplay() {
-        const container = document.getElementById('savedAnalysesList');
-        if (!container) return;
-
-        const analyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#00ff88' : type === 'error' ? '#ff4757' : '#00d4aa'};
+            color: #000;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            z-index: 3000;
+            font-weight: bold;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: slideInRight 0.3s ease;
+        `;
         
-        if (analyses.length === 0) {
-            container.innerHTML = '<p class="no-analyses">لا توجد تحاليل محفوظة</p>';
-            return;
-        }
-
-        container.innerHTML = analyses.map(analysis => `
-            <div class="saved-analysis-item">
-                <div class="analysis-header">
-                    <h4>${analysis.symbol}</h4>
-                    <span class="timestamp">${new Date(analysis.timestamp).toLocaleString('ar-SA')}</span>
-                </div>
-                <div class="analysis-summary">
-                    <p><strong>النمط:</strong> ${this.translatePattern(analysis.pattern.type)}</p>
-                    <p><strong>الاتجاه:</strong> ${analysis.pattern.direction === 'bullish' ? 'صاعد' : 'هابط'}</p>
-                    <p><strong>الموجة:</strong> ${this.translateWave(analysis.wave?.currentWave || 'unknown')}</p>
-                    <p><strong>التوصية:</strong> ${analysis.recommendation.action}</p>
-                </div>
-                <div class="analysis-actions">
-                    <button onclick="elliottWaveRadar.viewSavedAnalysis(${analysis.id})" class="view-btn">
-                        <i class="fa-solid fa-eye"></i>
-                        عرض
-                    </button>
-                    <button onclick="elliottWaveRadar.deleteSavedAnalysis(${analysis.id})" class="delete-btn">
-                        <i class="fa-solid fa-trash"></i>
-                        حذف
-                    </button>
-                </div>
-            </div>
-        `).join('');
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
     }
 
-    // دالة عرض التحليل المحفوظ
-    viewSavedAnalysis(analysisId) {
-        const analyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-        const analysis = analyses.find(a => a.id === analysisId);
+    filterResults(filter) {
+        const cards = document.querySelectorAll('.card');
         
-        if (analysis) {
-            this.showRecommendationModal({
-                symbol: analysis.symbol,
-                pattern: analysis.pattern,
-                wave: analysis.wave,
-                recommendation: analysis.recommendation,
-                targets: analysis.targets
-            });
-        }
-    }
-
-    // دالة حذف التحليل المحفوظ
-    deleteSavedAnalysis(analysisId) {
-        if (confirm('هل أنت متأكد من حذف هذا التحليل؟')) {
-            let analyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-            analyses = analyses.filter(a => a.id !== analysisId);
-            localStorage.setItem('savedAnalyses', JSON.stringify(analyses));
-            this.showNotification('تم حذف التحليل بنجاح', 'success');
-            this.updateSavedAnalysesDisplay();
-        }
-    }
-
-    // دالة تصدير التحاليل
-    exportAnalyses() {
-        const analyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-        
-        if (analyses.length === 0) {
-            this.showNotification('لا توجد تحاليل للتصدير', 'warning');
-            return;
-        }
-
-        const dataStr = JSON.stringify(analyses, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = `elliott-wave-analyses-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        this.showNotification('تم تصدير التحاليل بنجاح', 'success');
-    }
-
-    // دالة استيراد التحاليل
-    importAnalyses(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const importedAnalyses = JSON.parse(e.target.result);
-                const existingAnalyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-                
-                // دمج التحاليل المستوردة مع الموجودة
-                const mergedAnalyses = [...importedAnalyses, ...existingAnalyses];
-                
-                // إزالة المكررات والاحتفاظ بآخر 100 تحليل
-                const uniqueAnalyses = mergedAnalyses
-                    .filter((analysis, index, self) => 
-                        index === self.findIndex(a => a.id === analysis.id)
-                    )
-                    .slice(0, 100);
-                
-                localStorage.setItem('savedAnalyses', JSON.stringify(uniqueAnalyses));
-                this.updateSavedAnalysesDisplay();
-                this.showNotification(`تم استيراد ${importedAnalyses.length} تحليل بنجاح`, 'success');
-            } catch (error) {
-                console.error('خطأ في استيراد التحاليل:', error);
-                this.showNotification('فشل في استيراد التحاليل - تأكد من صحة الملف', 'error');
+        cards.forEach(card => {
+            let show = false;
+            
+            switch (filter) {
+                case 'all':
+                    show = true;
+                    break;
+                case 'bullish':
+                    show = card.dataset.direction === 'bullish';
+                    break;
+                case 'bearish':
+                    show = card.dataset.direction === 'bearish';
+                    break;
+                case 'high-confidence':
+                    show = card.dataset.confidence === 'high';
+                    break;
             }
-        };
-        reader.readAsText(file);
+            
+            if (show) {
+                card.style.display = 'block';
+                card.classList.add('fade-in');
+            } else {
+                card.style.display = 'none';
+            }
+        });
     }
 
-    // دالة إعداد التنبيهات
-    setupAlerts() {
-        // طلب إذن الإشعارات
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    this.showNotification('تم تفعيل الإشعارات بنجاح', 'success');
-                }
-            });
-        }
-    }
-
-    // دالة إرسال إشعار
-    sendNotification(title, message, type = 'info') {
-        if ('Notification' in window && Notification.permission === 'granted') {
-            const notification = new Notification(title, {
-                body: message,
-                icon: '/favicon.ico',
-                badge: '/favicon.ico',
-                tag: 'elliott-wave-radar'
-            });
-
-            notification.onclick = () => {
-                window.focus();
-                notification.close();
-            };
-
-            // إغلاق الإشعار تلقائياً بعد 5 ثواني
-            setTimeout(() => notification.close(), 5000);
-        }
-    }
-
-    // دالة تحديث الإحصائيات
-    updateStatistics() {
-        const analyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-        const favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
+    async runRadar() {
+        const loadingElement = document.getElementById("loading");
         
-        const stats = {
-            totalAnalyses: analyses.length,
-            favoriteSymbols: favorites.length,
-            bullishAnalyses: analyses.filter(a => a.pattern.direction === 'bullish').length,
-            bearishAnalyses: analyses.filter(a => a.pattern.direction === 'bearish').length,
-            highConfidenceAnalyses: analyses.filter(a => a.pattern.confidence > 80).length
-        };
-
-        // تحديث عرض الإحصائيات
-        const statsContainer = document.getElementById('statisticsContainer');
-        if (statsContainer) {
-            statsContainer.innerHTML = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-chart-line"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>${stats.totalAnalyses}</h3>
-                            <p>إجمالي التحاليل</p>
-                        </div>
+        try {
+            loadingElement.querySelector('p').textContent = "🔄 جاري جلب قائمة العملات...";
+            
+            this.symbols = await this.fetchTopSymbols(100);
+            
+            if (this.symbols.length === 0) {
+                loadingElement.innerHTML = `
+                    <div class="error-message">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                        <p>❌ فشل في جلب قائمة العملات</p>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-heart"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>${stats.favoriteSymbols}</h3>
-                            <p>الرموز المفضلة</p>
-                        </div>
-                    </div>
-                    <div class="stat-card bullish">
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-arrow-trend-up"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>${stats.bullishAnalyses}</h3>
-                            <p>تحاليل صاعدة</p>
-                        </div>
-                    </div>
-                    <div class="stat-card bearish">
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-arrow-trend-down"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>${stats.bearishAnalyses}</h3>
-                            <p>تحاليل هابطة</p>
-                        </div>
-                    </div>
-                    <div class="stat-card high-confidence">
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-star"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3>${stats.highConfidenceAnalyses}</h3>
-                            <p>تحاليل عالية الثقة</p>
-                        </div>
-                    </div>
+                `;
+                return;
+            }
+            
+            loadingElement.querySelector('p').textContent = `🔄 جاري تحليل ${this.symbols.length} عملة...`;
+            
+            // تحليل العملات بشكل متتالي مع تأخير لتجنب حدود API
+            for (let i = 0; i < this.symbols.length; i++) {
+                setTimeout(() => {
+                    this.analyzeSymbol(this.symbols[i]);
+                    
+                    // تحديث شريط التقدم
+                    const progress = Math.round(((i + 1) / this.symbols.length) * 100);
+                    loadingElement.querySelector('p').textContent = 
+                        `🔄 تم تحليل ${i + 1} من ${this.symbols.length} عملة (${progress}%)`;
+                    
+                    // إخفاء شاشة التحميل عند الانتهاء
+                    if (i === this.symbols.length - 1) {
+                        setTimeout(() => {
+                            loadingElement.style.display = 'none';
+                        }, 2000);
+                    }
+                }, i * 600); // تأخير 600ms بين كل طلب
+            }
+            
+        } catch (error) {
+            console.error('خطأ في تشغيل الرادار:', error);
+            loadingElement.innerHTML = `
+                <div class="error-message">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                    <p>❌ حدث خطأ في تشغيل الرادار</p>
                 </div>
             `;
         }
     }
 
-    // دالة تحديث الموضوع (Theme)
-    toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        // تحديث أيقونة الموضوع
-        const themeIcon = document.querySelector('#themeToggle i');
-        if (themeIcon) {
-            themeIcon.className = newTheme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
-        
-        this.showNotification(`تم التبديل إلى الوضع ${newTheme === 'dark' ? 'الليلي' : 'النهاري'}`, 'success');
+    translatePattern(type) {
+        const patterns = {
+            'motive': 'دافع',
+            'corrective': 'تصحيحي',
+            'impulse': 'دفعة',
+            'diagonal': 'قطري',
+            'zigzag': 'متعرج',
+            'flat': 'مسطح',
+            'triangle': 'مثلث'
+        };
+        return patterns[type] || type;
     }
 
-    // دالة تهيئة الموضوع عند التحميل
-    initializeTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        const themeIcon = document.querySelector('#themeToggle i');
-        if (themeIcon) {
-            themeIcon.className = savedTheme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-        }
+    translateWave(wave) {
+        const waves = {
+            'extension_or_new_cycle': 'امتداد أو دورة جديدة',
+            'corrective_phase': 'مرحلة تصحيحية',
+            'correction_completion': 'اكتمال التصحيح',
+            'new_impulse_starting': 'بداية دفعة جديدة',
+            'wave_1': 'الموجة الأولى',
+            'wave_2': 'الموجة الثانية',
+            'wave_3': 'الموجة الثالثة',
+            'wave_4': 'الموجة الرابعة',
+            'wave_5': 'الموجة الخامسة',
+            'wave_a': 'الموجة A',
+            'wave_b': 'الموجة B',
+            'wave_c': 'الموجة C',
+            'unknown': 'غير محددة'
+        };
+        return waves[wave] || wave;
     }
 
-    // دالة البحث المتقدم
-    performAdvancedSearch(criteria) {
-        const analyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-        
-        let filteredAnalyses = analyses.filter(analysis => {
-            let matches = true;
-            
-            // البحث بالرمز
-            if (criteria.symbol && !analysis.symbol.toLowerCase().includes(criteria.symbol.toLowerCase())) {
-                matches = false;
-            }
-            
-            // البحث بالاتجاه
-            if (criteria.direction && analysis.pattern.direction !== criteria.direction) {
-                matches = false;
-            }
-            
-            // البحث بنوع النمط
-            if (criteria.patternType && analysis.pattern.type !== criteria.patternType) {
-                matches = false;
-            }
-            
-            // البحث بمستوى الثقة
-            if (criteria.minConfidence && analysis.pattern.confidence < criteria.minConfidence) {
-                matches = false;
-            }
-            
-            // البحث بالتاريخ
-            if (criteria.dateFrom) {
-                const analysisDate = new Date(analysis.timestamp);
-                const fromDate = new Date(criteria.dateFrom);
-                if (analysisDate < fromDate) {
-                    matches = false;
-                }
-            }
-            
-            if (criteria.dateTo) {
-                const analysisDate = new Date(analysis.timestamp);
-                const toDate = new Date(criteria.dateTo);
-                if (analysisDate > toDate) {
-                    matches = false;
-                }
-            }
-            
-            return matches;
-        });
-        
-        return filteredAnalyses;
+    translateTrend(trend) {
+        const trends = {
+            'bullish': 'صاعد',
+            'bearish': 'هابط',
+            'neutral': 'محايد',
+            'bullish_correction_end': 'نهاية تصحيح صاعد',
+            'bearish_correction_end': 'نهاية تصحيح هابط',
+            'strong_bullish': 'صاعد قوي',
+            'strong_bearish': 'هابط قوي'
+        };
+        return trends[trend] || trend;
     }
 
-    // دالة عرض نتائج البحث المتقدم
-    showAdvancedSearchResults(results) {
-        const modal = document.getElementById('searchResultsModal');
-        const resultsContainer = modal.querySelector('.search-results');
+    getWavePhase(wave) {
+        if (!wave || !wave.currentWave) return 'غير محددة';
         
-        if (results.length === 0) {
-            resultsContainer.innerHTML = '<p class="no-results">لم يتم العثور على نتائج مطابقة</p>';
+        const phases = {
+            'wave_1': 'بداية الاتجاه',
+            'wave_2': 'تصحيح أولي',
+            'wave_3': 'الدفعة الرئيسية',
+            'wave_4': 'تصحيح ثانوي',
+            'wave_5': 'الدفعة النهائية',
+            'wave_a': 'بداية التصحيح',
+            'wave_b': 'ارتداد مؤقت',
+            'wave_c': 'نهاية التصحيح'
+        };
+        
+        return phases[wave.currentWave] || 'مرحلة انتقالية';
+    }
+
+    getWaveExpectation(pattern, wave) {
+        if (!wave || !wave.currentWave) return 'غير محدد';
+        
+        const direction = pattern.direction;
+        const currentWave = wave.currentWave;
+        
+        if (direction === 'bullish') {
+            switch (currentWave) {
+                case 'wave_1':
+                    return 'توقع تصحيح قبل الارتفاع';
+                case 'wave_2':
+                    return 'توقع ارتفاع قوي قادم';
+                case 'wave_3':
+                    return 'أقوى موجة صاعدة';
+                case 'wave_4':
+                    return 'تصحيح قبل الدفعة الأخيرة';
+                case 'wave_5':
+                    return 'نهاية الاتجاه الصاعد';
+                case 'wave_c':
+                    return 'نهاية التصحيح - فرصة شراء';
+                default:
+                    return 'مراقبة التطورات';
+            }
         } else {
-            resultsContainer.innerHTML = results.map(analysis => `
-                <div class="search-result-item">
-                    <div class="result-header">
-                        <h4>${analysis.symbol}</h4>
-                        <span class="result-date">${new Date(analysis.timestamp).toLocaleDateString('ar-SA')}</span>
-                    </div>
-                    <div class="result-details">
-                        <span class="pattern-type">${this.translatePattern(analysis.pattern.type)}</span>
-                        <span class="direction ${analysis.pattern.direction}">${analysis.pattern.direction === 'bullish' ? 'صاعد' : 'هابط'}</span>
-                        <span class="confidence">${analysis.pattern.confidence}%</span>
-                    </div>
-                    <div class="result-actions">
-                        <button onclick="elliottWaveRadar.viewSavedAnalysis(${analysis.id})" class="view-result-btn">
-                            <i class="fa-solid fa-eye"></i>
-                            عرض التفاصيل
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        modal.style.display = 'block';
-    }
-
-    // دالة تصدير نتائج البحث
-    exportSearchResults(results) {
-        if (results.length === 0) {
-            this.showNotification('لا توجد نتائج للتصدير', 'warning');
-            return;
-        }
-        
-        const csvContent = this.convertToCSV(results);
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        
-        link.href = URL.createObjectURL(blob);
-        link.download = `search-results-${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        
-        this.showNotification('تم تصدير النتائج بنجاح', 'success');
-    }
-
-    // دالة تحويل البيانات إلى CSV
-    convertToCSV(data) {
-        const headers = ['الرمز', 'التاريخ', 'النمط', 'الاتجاه', 'مستوى الثقة', 'الموجة', 'التوصية'];
-        const csvRows = [headers.join(',')];
-        
-        data.forEach(analysis => {
-            const row = [
-                analysis.symbol,
-                new Date(analysis.timestamp).toLocaleDateString('ar-SA'),
-                this.translatePattern(analysis.pattern.type),
-                analysis.pattern.direction === 'bullish' ? 'صاعد' : 'هابط',
-                analysis.pattern.confidence + '%',
-                this.translateWave(analysis.wave?.currentWave || 'unknown'),
-                analysis.recommendation.action
-            ];
-            csvRows.push(row.join(','));
-        });
-        
-        return csvRows.join('\n');
-    }
-
-    // دالة إعداد التحديث التلقائي
-    setupAutoRefresh() {
-        const interval = localStorage.getItem('autoRefreshInterval') || 300000; // 5 دقائق افتراضياً
-        
-        if (this.autoRefreshTimer) {
-            clearInterval(this.autoRefreshTimer);
-        }
-        
-        this.autoRefreshTimer = setInterval(() => {
-            const favorites = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
-            if (favorites.length > 0) {
-                this.refreshFavoriteAnalyses(favorites);
+            switch (currentWave) {
+                case 'wave_1':
+                    return 'توقع ارتداد قبل الهبوط';
+                case 'wave_2':
+                    return 'توقع هبوط قوي قادم';
+                case 'wave_3':
+                    return 'أقوى موجة هابطة';
+                case 'wave_4':
+                    return 'ارتداد قبل الهبوط الأخير';
+                case 'wave_5':
+                    return 'نهاية الاتجاه الهابط';
+                case 'wave_c':
+                    return 'نهاية التصحيح - فرصة بيع';
+                default:
+                    return 'مراقبة التطورات';
             }
-        }, parseInt(interval));
-    }
-
-    // دالة تحديث تحاليل المفضلة تلقائياً
-    async refreshFavoriteAnalyses(favorites) {
-        try {
-            for (const symbol of favorites.slice(0, 5)) { // تحديث أول 5 رموز فقط لتجنب الحمل الزائد
-                const result = await this.analyzeSymbol(symbol, false); // false = عدم إظهار النتائج
-                if (result && this.shouldNotifyUser(result)) {
-                    this.sendNotification(
-                        `تحديث ${symbol}`,
-                        `تم اكتشاف فرصة جديدة: ${result.recommendation.action}`,
-                        'info'
-                    );
-                }
-            }
-        } catch (error) {
-            console.error('خطأ في التحديث التلقائي:', error);
-        }
-    }
-
-    // دالة تحديد ما إذا كان يجب إشعار المستخدم
-    shouldNotifyUser(result) {
-        // إشعار المستخدم إذا كان مستوى الثقة عالي أو إذا كانت هناك فرصة قوية
-        return result.pattern.confidence > 80 || 
-               (result.pattern.direction === 'bullish' && result.recommendation.action === 'شراء') ||
-               (result.pattern.direction === 'bearish' && result.recommendation.action === 'بيع');
-    }
-
-    // دالة إعداد الاختصارات
-    setupKeyboardShortcuts() {
-        document.addEventListener('keydown', (event) => {
-            // Ctrl + Enter: تحليل سريع
-            if (event.ctrlKey && event.key === 'Enter') {
-                event.preventDefault();
-                const symbolInput = document.getElementById('symbolInput');
-                if (symbolInput && symbolInput.value.trim()) {
-                    this.analyzeSymbol(symbolInput.value.trim().toUpperCase());
-                }
-            }
-            
-            // Ctrl + S: حفظ التحليل الحالي
-            if (event.ctrlKey && event.key === 's') {
-                event.preventDefault();
-                if (this.lastAnalysisResult) {
-                    this.saveAnalysis(this.lastAnalysisResult);
-                }
-            }
-            
-            // Ctrl + D: تبديل الموضوع
-            if (event.ctrlKey && event.key === 'd') {
-                event.preventDefault();
-                this.toggleTheme();
-            }
-            
-            // Escape: إغلاق النوافذ المنبثقة
-            if (event.key === 'Escape') {
-                const modals = document.querySelectorAll('.modal[style*="block"]');
-                modals.forEach(modal => modal.style.display = 'none');
-            }
-        });
-    }
-
-    // دالة تهيئة التطبيق
-    initialize() {
-        console.log('🚀 تهيئة Elliott Wave Radar...');
-        
-        // تهيئة الموضوع
-        this.initializeTheme();
-        
-        // تهيئة الإشعارات
-        this.setupAlerts();
-        
-        // تهيئة الاختصارات
-        this.setupKeyboardShortcuts();
-        
-        // تحديث العروض
-        this.updateFavoritesDisplay();
-        this.updateSavedAnalysesDisplay();
-        this.updateStatistics();
-        
-        // إعداد التحديث التلقائي
-        this.setupAutoRefresh();
-        
-        // إعداد مستمعي الأحداث
-        this.setupEventListeners();
-        
-        console.log('✅ تم تهيئة Elliott Wave Radar بنجاح');
-    }
-
-    // دالة إعداد مستمعي الأحداث
-    setupEventListeners() {
-        // زر نسخ التوصية
-        document.addEventListener('click', (event) => {
-            if (event.target.id === 'copyRecommendation' || event.target.closest('#copyRecommendation')) {
-                this.copyRecommendation();
-            }
-        });
-        
-        // زر تبديل الموضوع
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => this.toggleTheme());
-        }
-        
-        // إغلاق النوافذ المنبثقة عند النقر خارجها
-        document.addEventListener('click', (event) => {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        });
-        
-        // منع إغلاق النافذة عند النقر على المحتوى
-        document.addEventListener('click', (event) => {
-            if (event.target.classList.contains('modal-content')) {
-                event.stopPropagation();
-            }
-        });
-    }
-
-    // دالة تنظيف الموارد
-    cleanup() {
-        if (this.autoRefreshTimer) {
-            clearInterval(this.autoRefreshTimer);
         }
     }
 }
 
-// إنشاء مثيل من التطبيق
-const elliottWaveRadar = new ElliottWaveRadar();
+// إضافة الأنيميشن للإشعارات
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    .error-message {
+        text-align: center;
+        color: var(--danger-color);
+        padding: 2rem;
+    }
+    
+    .error-message i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .recommendation-content {
+        color: var(--text-primary);
+    }
+    
+    .recommendation-section {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: rgba(0, 212, 170, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid var(--primary-color);
+    }
+    
+    .recommendation-section h4 {
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .recommendation-section p {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+    }
+    
+    .recommendation-section:last-child {
+        background: rgba(255, 71, 87, 0.05);
+        border-left-color: var(--danger-color);
+    }
+    
+    .recommendation-section:last-child h4 {
+        color: var(--danger-color);
+    }
+`;
+document.head.appendChild(style);
 
-// تهيئة التطبيق عند تحميل الصفحة
+// تهيئة التطبيق
+let radar;
 document.addEventListener('DOMContentLoaded', () => {
-    elliottWaveRadar.initialize();
+    radar = new ElliottWaveRadar();
 });
 
-// تنظيف الموارد عند إغلاق الصفحة
-window.addEventListener('beforeunload', () => {
-    elliottWaveRadar.cleanup();
+// إضافة وظائف مساعدة للنافذة العامة
+window.radar = null;
+window.addEventListener('load', () => {
+    if (!window.radar) {
+        window.radar = new ElliottWaveRadar();
+    }
 });
-
-// تصدير للاستخدام العام
-window.elliottWaveRadar = elliottWaveRadar;
