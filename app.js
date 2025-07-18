@@ -577,14 +577,14 @@ getBestEntryTime(pattern) {
 
 
     
-    formatRecommendation(result) {
-        const { symbol, pattern, targets, recommendation, wave } = result;
-        
-        // التأكد من أن entry هو رقم
-        const entryPrice = typeof recommendation.entry === 'number' ? 
-            recommendation.entry : parseFloat(recommendation.entry) || 0;
-        
-        return `
+   formatRecommendation(result) {
+    const { symbol, pattern, targets, recommendation, wave, strategy, waveAnalysis } = result;
+
+    const entryPrice = typeof recommendation.entry === 'number'
+        ? recommendation.entry
+        : parseFloat(recommendation.entry) || 0;
+
+    return `
 🔥 توصية تداول - ${symbol}
 
 📊 التحليل الفني:
@@ -599,17 +599,39 @@ getBestEntryTime(pattern) {
 • الإطار الزمني: ${recommendation.timeframe}
 • مستوى المخاطرة: ${recommendation.riskLevel}
 
-🎯 الأهداف:
+🎯 الأهداف السعرية:
 • الهدف الأول: $${targets.target1.toFixed(4)}
 • الهدف الثاني: $${targets.target2.toFixed(4)}
 • الهدف الثالث: $${targets.target3.toFixed(4)}
 • وقف الخسارة: $${targets.stopLoss.toFixed(4)}
 
-⚠️ تحذير: هذا التحليل لأغراض تعليمية وليس نصيحة استثمارية
+🔍 تحليل الموجة التفصيلي:
+• الموجة الحالية: ${this.translateWave(wave?.currentWave || 'unknown')}
+• المرحلة: ${waveAnalysis?.phase || 'غير معروف'}
+• التوقع القادم: ${waveAnalysis?.nextExpectation || 'غير معروف'}
+• نوع الدورة: ${waveAnalysis?.cycleType || 'غير معروف'}
+• قوة الموجة: ${waveAnalysis?.waveStrength || 'غير معروف'}
+• الموجة المتوقعة التالية: ${waveAnalysis?.nextWave || 'غير معروف'}
 
-#ElliottWave #TechnicalAnalysis #Crypto
-        `.trim();
-    }
+📈 استراتيجية التداول:
+• نقطة الدخول المثلى: $${entryPrice.toFixed(4)}
+• حجم المركز المقترح: ${strategy?.positionSize || 'غير معروف'}
+• نسبة المخاطرة/العائد: ${strategy?.riskReward || 'غير معروف'}
+• مدة الصفقة المتوقعة: ${strategy?.expectedDuration || 'غير معروف'}
+• أفضل وقت للدخول: ${strategy?.bestEntryTime || 'غير معروف'}
+
+⚠️ تحذيرات مهمة:
+• هذا التحليل مبني على نظرية موجات إليوت وليس نصيحة استثمارية
+• يُنصح بإجراء تحليل إضافي من مصادر متعددة قبل اتخاذ قرار التداول
+• استخدم إدارة المخاطر المناسبة ولا تخاطر بأكثر من 2% من رأس المال
+• راقب الأخبار والأحداث التي قد تؤثر على السوق
+• لا تستثمر أكثر مما يمكنك تحمل خسارته
+• قم بمراجعة وتحديث استراتيجيتك بانتظام
+
+#ElliottWave #TechnicalAnalysis #Crypto #Yaser
+    `.trim();
+}
+
 
     copyRecommendation() {
         const modal = document.getElementById('recommendationModal');
