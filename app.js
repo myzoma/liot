@@ -32,7 +32,7 @@ class ElliottWaveRadar {
         document.querySelector('.close').addEventListener('click', () => {
             document.getElementById('recommendationModal').style.display = 'none';
         });
-
+        
         // Copy recommendation
         document.getElementById('copyRecommendation').addEventListener('click', () => {
             this.copyRecommendation();
