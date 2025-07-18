@@ -1,105 +1,158 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>رادار موجات إليوت</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>رادار موجات إليوت المتقدم</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1><i class="fa-solid fa-wave-square"></i> رادار موجات إليوت</h1>
-    <p class="loading" id="loading">🔄 جاري فحص أول 100 عملة...</p>
-    <div id="results" class="results"></div>
-  </div>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <i class="fa-solid fa-wave-square"></i>
+                <span>رادار موجات إليوت المتقدم</span>
+            </div>
+            <nav class="nav">
+                <a href="#dashboard" class="nav-link active">
+                    <i class="fa-solid fa-chart-line"></i>
+                    لوحة التحكم
+                </a>
+                <a href="#settings" class="nav-link">
+                    <i class="fa-solid fa-cog"></i>
+                    الإعدادات
+                </a>
+            </nav>
+        </div>
+    </header>
 
-  <script src="elliott-wave.js"></script>
-  <script>
-    async function fetchTopSymbols(limit = 100) {
-      const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
-      const data = await res.json();
-      return data
-        .filter(d => d.symbol.endsWith('USDT') && !d.symbol.includes('UP') && !d.symbol.includes('DOWN'))
-        .slice(0, limit)
-        .map(d => d.symbol);
-    }
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Dashboard Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalSymbols">0</h3>
+                        <p>العملات المحللة</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="bullishCount">0</h3>
+                        <p>إشارات صاعدة</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-chart-line-down"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="bearishCount">0</h3>
+                        <p>إشارات هابطة</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="avgConfidence">0%</h3>
+                        <p>متوسط الثقة</p>
+                    </div>
+                </div>
+            </div>
 
-    async function fetchKlines(symbol, interval = '1h', limit = 120) {
-      const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      return data.map(k => [k[0], k[1], k[2], k[3], k[4], k[5]]);
-    }
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <h2><i class="fa-solid fa-chart-pie"></i> توزيع الإشارات</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="signalsChart"></canvas>
+                </div>
+            </div>
 
-    async function analyzeSymbol(symbol) {
-      try {
-        const data = await fetchKlines(symbol);
-        const analyzer = new ElliottWaveAnalyzer();
-        const result = analyzer.analyze(data);
-        if (result.status === 'success' && result.patterns.length > 0) {
-          const top = result.patterns[0];
-          if (top.confidence >= 80) {
-            renderCard(symbol, top, result.trend, result.currentWaveAnalysis);
-          }
-        }
-      } catch (e) {
-        console.warn(`❌ خطأ في ${symbol}:`, e.message);
-      }
-    }
+            <!-- Loading -->
+            <div class="loading-section" id="loading">
+                <div class="loading-spinner"></div>
+                <p>🔄 جاري فحص أول 100 عملة...</p>
+            </div>
 
-    async function runRadar() {
-      const symbols = await fetchTopSymbols(100);
-      for (let i = 0; i < symbols.length; i++) {
-        setTimeout(() => analyzeSymbol(symbols[i]), i * 500); // delay لعدم الضغط على Binance
-      }
-      document.getElementById("loading").textContent = "✅ تم بدء التحليل...";
-    }
+            <!-- Results -->
+            <div class="results-section">
+                <div class="results-header">
+                    <h2><i class="fa-solid fa-list"></i> نتائج التحليل</h2>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="all">الكل</button>
+                        <button class="filter-btn" data-filter="bullish">صاعد</button>
+                        <button class="filter-btn" data-filter="bearish">هابط</button>
+                        <button class="filter-btn" data-filter="high-confidence">ثقة عالية</button>
+                    </div>
+                </div>
+                <div id="results" class="results-grid"></div>
+            </div>
+        </div>
+    </main>
 
-    function renderCard(symbol, pattern, trend, wave) {
-      const container = document.getElementById("results");
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>رادار موجات إليوت</h3>
+                <p>أداة تحليل متقدمة لموجات إليوت في أسواق العملات الرقمية</p>
+            </div>
+            <div class="footer-section">
+                <h4>روابط مفيدة</h4>
+                <ul>
+                    <li><a href="#">دليل الاستخدام</a></li>
+                    <li><a href="#">نظرية موجات إليوت</a></li>
+                    <li><a href="#">الدعم الفني</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>تواصل معنا</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-telegram"></i></a>
+                    <a href="#"><i class="fa-brands fa-discord"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 رادار موجات إليوت. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
 
-      const trendIcon = trend.includes('bullish') ? 'fa-arrow-up' : 'fa-arrow-down';
-      const waveText = wave?.currentWave ? translateWave(wave.currentWave) : 'غير محددة';
+    <!-- Modal for Recommendations -->
+    <div id="recommendationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>توصية التداول</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button id="copyRecommendation" class="btn btn-primary">
+                    <i class="fa-solid fa-copy"></i>
+                    نسخ التوصية
+                </button>
+            </div>
+        </div>
+    </div>
 
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <h2><i class="fa-solid fa-coins"></i> ${symbol}</h2>
-        <p><i class="fa-solid fa-chart-line"></i> النمط: ${pattern.type === 'motive' ? 'دافع' : 'تصحيحي'} 
-          ${pattern.direction === 'bullish' ? '🚀 صاعد' : '📉 هابط'}</p>
-        <p><i class="fa-solid fa-shield-halved"></i> الثقة: <strong>${pattern.confidence}%</strong></p>
-        <p><i class="fa-solid fa-location-crosshairs"></i> الموجة الحالية: ${waveText}</p>
-        <p><i class="fa-solid ${trendIcon}"></i> الاتجاه العام: ${translateTrend(trend)}</p>
-      `;
-      container.appendChild(card);
-    }
-
-    function translateWave(code) {
-      const map = {
-        'extension_or_new_cycle': 'امتداد أو دورة جديدة',
-        'corrective_phase': 'مرحلة تصحيحية',
-        'correction_completion': 'اكتمال التصحيح',
-        'new_impulse_starting': 'بداية دفعة جديدة'
-      };
-      return map[code] || code;
-    }
-
-    function translateTrend(trend) {
-      const map = {
-        bullish: 'صاعد',
-        bearish: 'هابط',
-        neutral: 'محايد',
-        bullish_correction_end: 'نهاية تصحيح صاعد',
-        bearish_correction_end: 'نهاية تصحيح هابط'
-      };
-      return map[trend] || trend;
-    }
-
-    runRadar();
-  </script>
-
-  <script src="elliott-wave.js"></script>
+    <script src="elliott-wave.js"></script>
+    <script src="app.js"></script>
 </body>
-
 </html>
