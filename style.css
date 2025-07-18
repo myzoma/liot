@@ -344,7 +344,7 @@ body {
     box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
 }
 
-/* Modal Styles */
+/* تحسين تصميم النافذة المنبثقة */
 .modal {
     display: none;
     position: fixed;
@@ -358,14 +358,16 @@ body {
 }
 
 .modal-content {
-    background: var(--gradient-card);
-    margin: 5% auto;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    margin: 2% auto;
     padding: 0;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 600px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 15px;
+    width: 95%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 50px rgba(0, 212, 170, 0.3);
     animation: modalSlideIn 0.3s ease;
 }
 
@@ -381,11 +383,13 @@ body {
 }
 
 .modal-header {
+    background: linear-gradient(135deg, var(--primary-color), #00a8cc);
+    color: #000;
     padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border-radius: 13px 13px 0 0;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5rem;
 }
 
 .modal-header h3 {
@@ -406,15 +410,112 @@ body {
 }
 
 .modal-body {
-    padding: 1.5rem;
+    padding: 2rem;
 }
 
 .modal-footer {
+    background: rgba(0, 212, 170, 0.1);
     padding: 1.5rem;
-    border-top: 1px solid var(--border-color);
+    border-radius: 0 0 13px 13px;
     text-align: center;
+    border-top: 1px solid rgba(0, 212, 170, 0.3);
+}
+/* تصميم شبكي للمحتوى */
+.recommendation-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    color: var(--text-primary);
 }
 
+.recommendation-card {
+    background: rgba(0, 212, 170, 0.05);
+    border: 1px solid rgba(0, 212, 170, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.recommendation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 0 2px 2px 0;
+}
+
+.recommendation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 212, 170, 0.2);
+    border-color: var(--primary-color);
+}
+
+.recommendation-card.warning::before {
+    background: var(--danger-color);
+}
+
+.recommendation-card.warning {
+    background: rgba(255, 71, 87, 0.05);
+    border-color: rgba(255, 71, 87, 0.2);
+}
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(0, 212, 170, 0.2);
+}
+
+.card-header h4 {
+    color: var(--primary-color);
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.card-header i {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.warning .card-header h4,
+.warning .card-header i {
+    color: var(--danger-color);
+}
+
+.card-content {
+    line-height: 1.6;
+}
+.card-content p {
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-content strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.value {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.bullish {
+    color: var(--success-color) !important;
+}
+
+.bearish {
+    color: var(--danger-color) !important;
+}
 .btn {
     padding: 0.75rem 1.5rem;
     border: none;
@@ -436,7 +537,102 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
 }
+/* أزرار النسخ */
+.copy-btn {
+    background: linear-gradient(135deg, var(--primary-color), #00a8cc);
+    color: #000;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
 
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 212, 170, 0.4);
+}
+
+.copy-btn i {
+    font-size: 1.1rem;
+}
+
+/* زر الإغلاق */
+.close {
+    color: #fff;
+    float: right;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    z-index: 1;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.close:hover {
+    background: var(--danger-color);
+    transform: rotate(90deg);
+}
+
+/* أنيميشن النافذة */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* تصميم متجاوب */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 98%;
+        margin: 1% auto;
+        max-height: 95vh;
+    }
+    
+    .recommendation-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .recommendation-card {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-header {
+        padding: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .copy-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
 /* Footer */
 .footer {
     background: var(--surface-dark);
