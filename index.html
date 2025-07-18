@@ -2,51 +2,104 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>تحليل موجات إليوت - بيانات Binance</title>
-    <link rel="stylesheet" href="style.css">
-
-  <style>
-    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; direction: rtl; }
-    h2 { color: #1e88e5; }
-    pre { background: #fff; padding: 15px; border-radius: 8px; max-height: 500px; overflow: auto; direction: ltr; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>رادار موجات إليوت</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
-  <h2>تحليل موجات إليوت من Binance</h2>
-  <pre id="output">جاري التحميل والتحليل...</pre>
+  <div class="container">
+    <h1><i class="fa-solid fa-wave-square"></i> رادار موجات إليوت</h1>
+    <p class="loading" id="loading">🔄 جاري فحص أول 100 عملة...</p>
+    <div id="results" class="results"></div>
+  </div>
 
-  <!-- كلاس ElliottWave -->
   <script src="elliott-wave.js"></script>
-
   <script>
-    async function fetchKlines(symbol = 'BTCUSDT', interval = '1h', limit = 100) {
-      const url = `https://api1.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      return data.map(k => [
-        k[0],  // time
-        k[1],  // open
-        k[2],  // high
-        k[3],  // low
-        k[4],  // close
-        k[5]   // volume
-      ]);
+    async function fetchTopSymbols(limit = 100) {
+      const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+      const data = await res.json();
+      return data
+        .filter(d => d.symbol.endsWith('USDT') && !d.symbol.includes('UP') && !d.symbol.includes('DOWN'))
+        .slice(0, limit)
+        .map(d => d.symbol);
     }
 
-    async function runAnalysis() {
+    async function fetchKlines(symbol, interval = '1h', limit = 120) {
+      const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data.map(k => [k[0], k[1], k[2], k[3], k[4], k[5]]);
+    }
+
+    async function analyzeSymbol(symbol) {
       try {
-        const klineData = await fetchKlines('BTCUSDT', '1h', 120); // عملة وفاصل زمني
+        const data = await fetchKlines(symbol);
         const analyzer = new ElliottWaveAnalyzer();
-        const result = analyzer.analyze(klineData);
-        document.getElementById("output").textContent = JSON.stringify(result.summary, null, 2);
+        const result = analyzer.analyze(data);
+        if (result.status === 'success' && result.patterns.length > 0) {
+          const top = result.patterns[0];
+          if (top.confidence >= 80) {
+            renderCard(symbol, top, result.trend, result.currentWaveAnalysis);
+          }
+        }
       } catch (e) {
-        document.getElementById("output").textContent = 'فشل في تحميل البيانات: ' + e.message;
+        console.warn(`❌ خطأ في ${symbol}:`, e.message);
       }
     }
 
-    runAnalysis();
-  </script>
-  <script src="elliott-wave.js"></script>
+    async function runRadar() {
+      const symbols = await fetchTopSymbols(100);
+      for (let i = 0; i < symbols.length; i++) {
+        setTimeout(() => analyzeSymbol(symbols[i]), i * 500); // delay لعدم الضغط على Binance
+      }
+      document.getElementById("loading").textContent = "✅ تم بدء التحليل...";
+    }
 
+    function renderCard(symbol, pattern, trend, wave) {
+      const container = document.getElementById("results");
+
+      const trendIcon = trend.includes('bullish') ? 'fa-arrow-up' : 'fa-arrow-down';
+      const waveText = wave?.currentWave ? translateWave(wave.currentWave) : 'غير محددة';
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <h2><i class="fa-solid fa-coins"></i> ${symbol}</h2>
+        <p><i class="fa-solid fa-chart-line"></i> النمط: ${pattern.type === 'motive' ? 'دافع' : 'تصحيحي'} 
+          ${pattern.direction === 'bullish' ? '🚀 صاعد' : '📉 هابط'}</p>
+        <p><i class="fa-solid fa-shield-halved"></i> الثقة: <strong>${pattern.confidence}%</strong></p>
+        <p><i class="fa-solid fa-location-crosshairs"></i> الموجة الحالية: ${waveText}</p>
+        <p><i class="fa-solid ${trendIcon}"></i> الاتجاه العام: ${translateTrend(trend)}</p>
+      `;
+      container.appendChild(card);
+    }
+
+    function translateWave(code) {
+      const map = {
+        'extension_or_new_cycle': 'امتداد أو دورة جديدة',
+        'corrective_phase': 'مرحلة تصحيحية',
+        'correction_completion': 'اكتمال التصحيح',
+        'new_impulse_starting': 'بداية دفعة جديدة'
+      };
+      return map[code] || code;
+    }
+
+    function translateTrend(trend) {
+      const map = {
+        bullish: 'صاعد',
+        bearish: 'هابط',
+        neutral: 'محايد',
+        bullish_correction_end: 'نهاية تصحيح صاعد',
+        bearish_correction_end: 'نهاية تصحيح هابط'
+      };
+      return map[trend] || trend;
+    }
+
+    runRadar();
+  </script>
+
+  <script src="elliott-wave.js"></script>
 </body>
+
 </html>
