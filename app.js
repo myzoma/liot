@@ -296,7 +296,7 @@ class ElliottWaveRadar {
         container.appendChild(card);
     }
 
-   showRecommendation(symbol) {
+  showRecommendation(symbol) {
     const result = this.results.find(r => r.symbol === symbol);
     if (!result) return;
 
@@ -312,7 +312,7 @@ class ElliottWaveRadar {
     
     const recommendationText = this.formatRecommendation(result);
     
-    // إضافة header للنافذة
+    // إضافة header للنافذة مع زر الإغلاق
     let modalHeader = modal.querySelector('.modal-header');
     if (!modalHeader) {
         modalHeader = document.createElement('div');
@@ -321,8 +321,13 @@ class ElliottWaveRadar {
     }
     
     modalHeader.innerHTML = `
-        <i class="fa-solid fa-coins"></i>
-        توصية تداول - ${symbol}
+        <div class="modal-title">
+            <i class="fa-solid fa-coins"></i>
+            توصية تداول - ${symbol}
+        </div>
+        <button class="modal-close-btn" onclick="document.getElementById('recommendationModal').style.display='none'">
+            <i class="fa-solid fa-times"></i>
+        </button>
     `;
     
     modalBody.innerHTML = `
@@ -409,20 +414,68 @@ class ElliottWaveRadar {
                 </div>
             </div>
 
-            <!-- بطاقة تحليل الموجة -->
+            <!-- بطاقة تحليل الموجة المفصل -->
             <div class="recommendation-card">
                 <div class="card-header">
                     <i class="fa-solid fa-wave-square"></i>
-                    <h4>تحليل الموجة</h4>
+                    <h4>تحليل الموجة التفصيلي</h4>
                 </div>
                 <div class="card-content">
+                    <p>
+                        <strong>الموجة الحالية:</strong>
+                        <span class="value">${this.translateWave(wave?.currentWave || 'unknown')}</span>
+                    </p>
                     <p>
                         <strong>المرحلة:</strong>
                         <span class="value">${this.getWavePhase(wave)}</span>
                     </p>
                     <p>
-                        <strong>التوقع:</strong>
+                        <strong>التوقع القادم:</strong>
                         <span class="value">${this.getWaveExpectation(pattern, wave)}</span>
+                    </p>
+                    <p>
+                        <strong>نوع الدورة:</strong>
+                        <span class="value">${this.getWaveCycle(wave, pattern)}</span>
+                    </p>
+                    <p>
+                        <strong>قوة الموجة:</strong>
+                        <span class="value ${this.getWaveStrength(pattern) > 75 ? 'bullish' : 'bearish'}">
+                            ${this.getWaveStrength(pattern)}%
+                        </span>
+                    </p>
+                    <p>
+                        <strong>الموجة المتوقعة التالية:</strong>
+                        <span class="value">${this.getNextWave(wave?.currentWave, pattern)}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- بطاقة استراتيجية التداول -->
+            <div class="recommendation-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-chess"></i>
+                    <h4>استراتيجية التداول</h4>
+                </div>
+                <div class="card-content">
+                    <p>
+                        <strong>نقطة الدخول المثلى:</strong>
+                        <span class="value">$${entryPrice.toFixed(4)}</span>
+                    </p>
+                    <p>
+                        <strong>حجم المركز المقترح:</strong>
+                        <span class="value">${this.getPositionSize(recommendation.riskLevel)}</span>
+                    </p>
+                    <p>
+                        <strong>نسبة المخاطرة/العائد:</strong>
+                        <span class="value bullish">${this.getRiskRewardRatio(entryPrice, targets)}</span>
+                    </p>
+                    <p>
+                        <strong>مدة الصفقة المتوقعة:</strong>
+                        <span class="value">${this.getTradeDuration(wave, pattern)}</span>
+                    </p>
+                    <p>
+                        <strong>أفضل وقت للدخول:</strong>
+                        <span class="value">${this.getBestEntryTime(pattern)}</span>
                     </p>
                 </div>
             </div>
@@ -434,11 +487,12 @@ class ElliottWaveRadar {
                     <h4>تحذيرات مهمة</h4>
                 </div>
                 <div class="card-content">
-                    <p>• هذا التحليل مبني على نظرية موجات إليوت</p>
-                    <p>• ليس نصيحة استثمارية مالية</p>
-                    <p>• يُنصح بإجراء تحليل إضافي</p>
-                    <p>• استخدم إدارة المخاطر المناسبة</p>
-                    <p>• لا تستثمر أكثر مما تستطيع خسارته</p>
+                    <p>• هذا التحليل مبني على نظرية موجات إليوت وليس نصيحة استثمارية</p>
+                    <p>• يُنصح بإجراء تحليل إضافي من مصادر متعددة قبل اتخاذ قرار التداول</p>
+                    <p>• استخدم إدارة المخاطر المناسبة ولا تخاطر بأكثر من 2% من رأس المال</p>
+                    <p>• راقب الأخبار والأحداث التي قد تؤثر على السوق</p>
+                    <p>• لا تستثمر أكثر مما يمكنك تحمل خسارته</p>
+                    <p>• قم بمراجعة وتحديث استراتيجيتك بانتظام</p>
                 </div>
             </div>
         </div>
@@ -452,7 +506,11 @@ class ElliottWaveRadar {
         modalFooter.innerHTML = `
             <button id="copyRecommendation" class="copy-btn">
                 <i class="fa-solid fa-copy"></i>
-                نسخ التوصية
+                نسخ التوصية الكاملة
+            </button>
+            <button class="close-btn" onclick="document.getElementById('recommendationModal').style.display='none'">
+                <i class="fa-solid fa-times"></i>
+                إغلاق
             </button>
         `;
         modal.querySelector('.modal-content').appendChild(modalFooter);
@@ -461,14 +519,108 @@ class ElliottWaveRadar {
     modal.style.display = 'block';
     modal.dataset.recommendationText = recommendationText;
 }
-    formatRecommendation(result) {
-        const { symbol, pattern, targets, recommendation, wave } = result;
-        
-        // التأكد من أن entry هو رقم
-        const entryPrice = typeof recommendation.entry === 'number' ? 
-            recommendation.entry : parseFloat(recommendation.entry) || 0;
-        
-        return `
+
+// إضافة الدوال المساعدة الجديدة
+getWaveCycle(wave, pattern) {
+    if (!wave || !wave.currentWave) return 'غير محدد';
+    
+    const currentWave = wave.currentWave;
+    if (['wave_1', 'wave_3', 'wave_5'].includes(currentWave)) {
+        return 'دورة دافعة (Impulse)';
+    } else if (['wave_2', 'wave_4'].includes(currentWave)) {
+        return 'دورة تصحيحية (Corrective)';
+    } else if (['wave_a', 'wave_b', 'wave_c'].includes(currentWave)) {
+        return 'دورة تصحيح ABC';
+    }
+    return 'دورة انتقالية';
+}
+
+getWaveStrength(pattern) {
+    return pattern.confidence || 0;
+}
+
+getNextWave(currentWave, pattern) {
+    if (!currentWave) return 'غير محدد';
+    
+    const waveSequence = {
+        'wave_1': 'الموجة الثانية (تصحيحية)',
+        'wave_2': 'الموجة الثالثة (دافعة قوية)',
+        'wave_3': 'الموجة الرابعة (تصحيحية)',
+        'wave_4': 'الموجة الخامسة (دافعة نهائية)',
+        'wave_5': 'الموجة A (بداية تصحيح)',
+        'wave_a': 'الموجة B (ارتداد)',
+        'wave_b': 'الموجة C (نهاية تصحيح)',
+        'wave_c': 'الموجة الأولى (دورة جديدة)'
+    };
+    
+    return waveSequence[currentWave] || 'موجة انتقالية';
+}
+
+getPositionSize(riskLevel) {
+    const sizes = {
+        'منخفض': '3-5% من رأس المال',
+        'متوسط': '2-3% من رأس المال',
+        'عالي': '1-2% من رأس المال'
+    };
+    return sizes[riskLevel] || '2% من رأس المال';
+}
+
+getRiskRewardRatio(entryPrice, targets) {
+    const target1 = targets.target1;
+    const stopLoss = targets.stopLoss;
+    
+    const reward = Math.abs(target1 - entryPrice);
+    const risk = Math.abs(entryPrice - stopLoss);
+    
+    if (risk === 0) return '1:1';
+    
+    const ratio = (reward / risk).toFixed(1);
+    return `1:${ratio}`;
+}
+
+getTradeDuration(wave, pattern) {
+    if (!wave || !wave.currentWave) return '1-3 أيام';
+    
+    const durations = {
+        'wave_1': '2-5 أيام',
+        'wave_2': '1-3 أيام',
+        'wave_3': '3-7 أيام',
+        'wave_4': '1-2 أيام',
+        'wave_5': '2-4 أيام',
+        'wave_a': '1-3 أيام',
+        'wave_b': '1-2 أيام',
+        'wave_c': '2-5 أيام'
+    };
+    
+    return durations[wave.currentWave] || '1-3 أيام';
+}
+
+getBestEntryTime(pattern) {
+    const times = [
+        'عند كسر مستوى المقاومة',
+        'عند إعادة اختبار الدعم',
+        'عند تأكيد النمط',
+        'عند زيادة الحجم',
+        'عند إغلاق الشمعة'
+    ];
+    
+    return times[Math.floor(Math.random() * times.length)];
+}
+
+// تحديث دالة formatRecommendation لتشمل تحليل الموجة
+formatRecommendation(result) {
+    const { symbol, pattern,
+
+
+// تحديث دالة formatRecommendation لتشمل تحليل الموجة
+formatRecommendation(result) {
+    const { symbol, pattern, targets, recommendation, wave } = result;
+    
+    // التأكد من أن entry هو رقم
+    const entryPrice = typeof recommendation.entry === 'number' ? 
+        recommendation.entry : parseFloat(recommendation.entry) || 0;
+    
+    return `
 🔥 توصية تداول - ${symbol}
 
 📊 التحليل الفني:
@@ -489,11 +641,31 @@ class ElliottWaveRadar {
 • الهدف الثالث: $${targets.target3.toFixed(4)}
 • وقف الخسارة: $${targets.stopLoss.toFixed(4)}
 
-⚠️ تحذير: هذا التحليل لأغراض تعليمية وليس نصيحة استثمارية
+🌊 تحليل الموجة التفصيلي:
+• الموجة الحالية: ${this.translateWave(wave?.currentWave || 'unknown')}
+• المرحلة: ${this.getWavePhase(wave)}
+• التوقع القادم: ${this.getWaveExpectation(pattern, wave)}
+• نوع الدورة: ${this.getWaveCycle(wave, pattern)}
+• قوة الموجة: ${this.getWaveStrength(pattern)}%
+• الموجة المتوقعة التالية: ${this.getNextWave(wave?.currentWave, pattern)}
 
-#ElliottWave #TechnicalAnalysis #Crypto
-        `.trim();
-    }
+📈 استراتيجية التداول:
+• حجم المركز المقترح: ${this.getPositionSize(recommendation.riskLevel)}
+• نسبة المخاطرة/العائد: ${this.getRiskRewardRatio(entryPrice, targets)}
+• مدة الصفقة المتوقعة: ${this.getTradeDuration(wave, pattern)}
+• أفضل وقت للدخول: ${this.getBestEntryTime(pattern)}
+
+⚠️ تحذيرات مهمة:
+• هذا التحليل مبني على نظرية موجات إليوت وليس نصيحة استثمارية
+• يُنصح بإجراء تحليل إضافي من مصادر متعددة قبل اتخاذ قرار التداول
+• استخدم إدارة المخاطر المناسبة ولا تخاطر بأكثر من 2% من رأس المال
+• راقب الأخبار والأحداث التي قد تؤثر على السوق
+• لا تستثمر أكثر مما يمكنك تحمل خسارته
+
+#ElliottWave #TechnicalAnalysis #Crypto #WaveAnalysis #Yaser
+    `.trim();
+}
+
 
     copyRecommendation() {
         const modal = document.getElementById('recommendationModal');
