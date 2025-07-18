@@ -21,21 +21,10 @@
                     <i class="fa-solid fa-chart-line"></i>
                     لوحة التحكم
                 </a>
-                <a href="#favorites" class="nav-link">
-                    <i class="fa-solid fa-heart"></i>
-                    المفضلة
-                </a>
-                <a href="#saved" class="nav-link">
-                    <i class="fa-solid fa-bookmark"></i>
-                    التحاليل المحفوظة
-                </a>
                 <a href="#settings" class="nav-link">
                     <i class="fa-solid fa-cog"></i>
                     الإعدادات
                 </a>
-                <button id="themeToggle" class="theme-toggle">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
             </nav>
         </div>
     </header>
@@ -43,25 +32,6 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Quick Analysis Section -->
-            <div class="quick-analysis-section">
-                <div class="quick-analysis-header">
-                    <h2><i class="fa-solid fa-search"></i> تحليل سريع</h2>
-                </div>
-                <div class="quick-analysis-form">
-                    <div class="input-group">
-                        <input type="text" id="symbolInput" placeholder="أدخل رمز العملة (مثل: BTCUSDT)" class="symbol-input">
-                        <button onclick="elliottWaveRadar.analyzeSymbol(document.getElementById('symbolInput').value.trim().toUpperCase())" class="analyze-btn">
-                            <i class="fa-solid fa-chart-line"></i>
-                            تحليل
-                        </button>
-                    </div>
-                    <div class="shortcuts-info">
-                        <small><i class="fa-solid fa-keyboard"></i> اختصار: Ctrl + Enter</small>
-                    </div>
-                </div>
-            </div>
-
             <!-- Dashboard Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -102,11 +72,6 @@
                 </div>
             </div>
 
-            <!-- Statistics Container -->
-            <div id="statisticsContainer" class="statistics-section">
-                <!-- سيتم ملؤها بواسطة JavaScript -->
-            </div>
-
             <!-- Chart Section -->
             <div class="chart-section">
                 <div class="chart-header">
@@ -114,97 +79,6 @@
                 </div>
                 <div class="chart-container">
                     <canvas id="signalsChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Advanced Search Section -->
-            <div class="advanced-search-section">
-                <div class="search-header">
-                    <h2><i class="fa-solid fa-search-plus"></i> البحث المتقدم</h2>
-                    <button class="toggle-search-btn" onclick="document.querySelector('.search-form').classList.toggle('expanded')">
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </button>
-                </div>
-                <div class="search-form">
-                    <div class="search-grid">
-                        <div class="search-field">
-                            <label>الرمز</label>
-                            <input type="text" id="searchSymbol" placeholder="BTCUSDT">
-                        </div>
-                        <div class="search-field">
-                            <label>الاتجاه</label>
-                            <select id="searchDirection">
-                                <option value="">الكل</option>
-                                <option value="bullish">صاعد</option>
-                                <option value="bearish">هابط</option>
-                            </select>
-                        </div>
-                        <div class="search-field">
-                            <label>الحد الأدنى للثقة</label>
-                            <input type="number" id="searchConfidence" min="0" max="100" placeholder="75">
-                        </div>
-                        <div class="search-field">
-                            <label>من تاريخ</label>
-                            <input type="date" id="searchDateFrom">
-                        </div>
-                        <div class="search-field">
-                            <label>إلى تاريخ</label>
-                            <input type="date" id="searchDateTo">
-                        </div>
-                        <div class="search-actions">
-                            <button onclick="elliottWaveRadar.performAdvancedSearch({
-                                symbol: document.getElementById('searchSymbol').value,
-                                direction: document.getElementById('searchDirection').value,
-                                minConfidence: document.getElementById('searchConfidence').value,
-                                dateFrom: document.getElementById('searchDateFrom').value,
-                                dateTo: document.getElementById('searchDateTo').value
-                            })" class="search-btn">
-                                <i class="fa-solid fa-search"></i>
-                                بحث
-                            </button>
-                            <button onclick="document.querySelector('.search-form').reset()" class="reset-btn">
-                                <i class="fa-solid fa-refresh"></i>
-                                إعادة تعيين
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Favorites Section -->
-            <div class="favorites-section">
-                <div class="favorites-header">
-                    <h2><i class="fa-solid fa-heart"></i> الرموز المفضلة</h2>
-                    <div class="favorites-actions">
-                        <button onclick="elliottWaveRadar.refreshFavoriteAnalyses(JSON.parse(localStorage.getItem('favoriteSymbols') || '[]'))" class="refresh-favorites-btn">
-                            <i class="fa-solid fa-refresh"></i>
-                            تحديث
-                        </button>
-                    </div>
-                </div>
-                <div id="favoritesList" class="favorites-list">
-                    <!-- سيتم ملؤها بواسطة JavaScript -->
-                </div>
-            </div>
-
-            <!-- Saved Analyses Section -->
-            <div class="saved-analyses-section">
-                <div class="saved-analyses-header">
-                    <h2><i class="fa-solid fa-bookmark"></i> التحاليل المحفوظة</h2>
-                    <div class="saved-analyses-actions">
-                        <button onclick="elliottWaveRadar.exportAnalyses()" class="export-btn">
-                            <i class="fa-solid fa-download"></i>
-                            تصدير
-                        </button>
-                        <label for="importFile" class="import-btn">
-                            <i class="fa-solid fa-upload"></i>
-                            استيراد
-                        </label>
-                        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="elliottWaveRadar.importAnalyses(event)">
-                    </div>
-                </div>
-                <div id="savedAnalysesList" class="saved-analyses-list">
-                    <!-- سيتم ملؤها بواسطة JavaScript -->
                 </div>
             </div>
 
@@ -236,15 +110,6 @@
             <div class="footer-section">
                 <h3>رادار موجات إليوت</h3>
                 <p>أداة تحليل متقدمة لموجات إليوت في أسواق العملات الرقمية</p>
-                <div class="keyboard-shortcuts">
-                    <h4>الاختصارات</h4>
-                    <ul>
-                        <li><kbd>Ctrl + Enter</kbd> - تحليل سريع</li>
-                        <li><kbd>Ctrl + S</kbd> - حفظ التحليل</li>
-                        <li><kbd>Ctrl + D</kbd> - تبديل الموضوع</li>
-                        <li><kbd>Escape</kbd> - إغلاق النوافذ</li>
-                    </ul>
-                </div>
             </div>
             <div class="footer-section">
                 <h4>روابط مفيدة</h4>
@@ -272,304 +137,22 @@
     <div id="recommendationModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-coins"></i>
-                    توصية التداول
-                </div>
-                <button class="modal-close-btn" onclick="document.getElementById('recommendationModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                </button>
+                <h3>توصية التداول</h3>
+                <span class="close">&times;</span>
             </div>
             <div class="modal-body" id="modalBody">
                 <!-- Content will be inserted here -->
             </div>
             <div class="modal-footer">
-                <button id="copyRecommendation" class="copy-btn">
+                <button id="copyRecommendation" class="btn btn-primary">
                     <i class="fa-solid fa-copy"></i>
-                    نسخ التوصية الكاملة
-                </button>
-                <button class="close-btn" onclick="document.getElementById('recommendationModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                    إغلاق
+                    نسخ التوصية
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Search Results Modal -->
-    <div id="searchResultsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-search"></i>
-                    نتائج البحث
-                </div>
-                <button class="modal-close-btn" onclick="document.getElementById('searchResultsModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="search-results">
-                    <!-- Search results will be inserted here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button onclick="elliottWaveRadar.exportSearchResults(elliottWaveRadar.lastSearchResults)" class="export-results-btn">
-                    <i class="fa-solid fa-download"></i>
-                    تصدير النتائج
-                </button>
-                <button class="close-btn" onclick="document.getElementById('searchResultsModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                    إغلاق
-                </button>
-            </div>
-        </div>
-    </div>
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-cog"></i>
-                    الإعدادات
-                </div>
-                <button class="modal-close-btn" onclick="document.getElementById('settingsModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <h3><i class="fa-solid fa-palette"></i> المظهر</h3>
-                    <div class="setting-item">
-                        <label>الموضوع</label>
-                        <select id="themeSelect">
-                            <option value="light">فاتح</option>
-                            <option value="dark">داكن</option>
-                            <option value="auto">تلقائي</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h3><i class="fa-solid fa-chart-line"></i> التحليل</h3>
-                    <div class="setting-item">
-                        <label>الحد الأدنى لمستوى الثقة</label>
-                        <input type="range" id="confidenceThreshold" min="50" max="95" value="75">
-                        <span id="confidenceValue">75%</span>
-                    </div>
-                    <div class="setting-item">
-                        <label>عدد العملات للتحليل</label>
-                        <select id="analysisLimit">
-                            <option value="50">50 عملة</option>
-                            <option value="100" selected>100 عملة</option>
-                            <option value="200">200 عملة</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h3><i class="fa-solid fa-bell"></i> الإشعارات</h3>
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="enableNotifications">
-                            تفعيل الإشعارات
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="soundNotifications">
-                            الإشعارات الصوتية
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button onclick="elliottWaveRadar.saveSettings()" class="save-btn">
-                    <i class="fa-solid fa-save"></i>
-                    حفظ الإعدادات
-                </button>
-                <button onclick="elliottWaveRadar.resetSettings()" class="reset-settings-btn">
-                    <i class="fa-solid fa-refresh"></i>
-                    إعادة تعيين
-                </button>
-                <button class="close-btn" onclick="document.getElementById('settingsModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                    إغلاق
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Analysis Details Modal -->
-    <div id="analysisDetailsModal" class="modal">
-        <div class="modal-content large">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-chart-line"></i>
-                    تفاصيل التحليل
-                </div>
-                <button class="modal-close-btn" onclick="document.getElementById('analysisDetailsModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="analysisDetailsBody">
-                <!-- Analysis details will be inserted here -->
-            </div>
-            <div class="modal-footer">
-                <button id="saveAnalysisBtn" class="save-btn">
-                    <i class="fa-solid fa-bookmark"></i>
-                    حفظ التحليل
-                </button>
-                <button id="shareAnalysisBtn" class="share-btn">
-                    <i class="fa-solid fa-share"></i>
-                    مشاركة
-                </button>
-                <button class="close-btn" onclick="document.getElementById('analysisDetailsModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                    إغلاق
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Notification Container -->
-    <div id="notificationContainer" class="notification-container">
-        <!-- Notifications will be inserted here -->
-    </div>
-
-    <!-- Keyboard Shortcuts Help -->
-    <div id="shortcutsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-keyboard"></i>
-                    اختصارات لوحة المفاتيح
-                </div>
-                <button class="modal-close-btn" onclick="document.getElementById('shortcutsModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="shortcuts-grid">
-                    <div class="shortcut-item">
-                        <kbd>Ctrl + Enter</kbd>
-                        <span>تحليل سريع</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl + S</kbd>
-                        <span>حفظ التحليل الحالي</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl + D</kbd>
-                        <span>تبديل الموضوع (فاتح/داكن)</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl + F</kbd>
-                        <span>فتح البحث المتقدم</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl + ,</kbd>
-                        <span>فتح الإعدادات</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Escape</kbd>
-                        <span>إغلاق النوافذ المنبثقة</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>F1</kbd>
-                        <span>عرض هذه المساعدة</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl + R</kbd>
-                        <span>تحديث البيانات</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="close-btn" onclick="document.getElementById('shortcutsModal').style.display='none'">
-                    <i class="fa-solid fa-times"></i>
-                    إغلاق
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script src="script.js"></script>
-    
-    <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
-    </script>
-
-    <!-- Initialize App -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Elliott Wave Radar
-            if (typeof elliottWaveRadar !== 'undefined') {
-                elliottWaveRadar.init();
-            }
-            
-            // Load saved settings
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.body.setAttribute('data-theme', savedTheme);
-            
-            // Update theme toggle icon
-            const themeToggle = document.getElementById('themeToggle');
-            const themeIcon = themeToggle.querySelector('i');
-            if (savedTheme === 'dark') {
-                themeIcon.className = 'fa-solid fa-sun';
-            } else {
-                themeIcon.className = 'fa-solid fa-moon';
-            }
-            
-            // Load saved analyses count
-            const savedAnalyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
-            console.log(`تم تحميل ${savedAnalyses.length} تحليل محفوظ`);
-            
-            // Load favorite symbols
-            const favoriteSymbols = JSON.parse(localStorage.getItem('favoriteSymbols') || '[]');
-            console.log(`تم تحميل ${favoriteSymbols.length} رمز مفضل`);
-            
-            // Show welcome message for first-time users
-            if (!localStorage.getItem('hasVisited')) {
-                setTimeout(() => {
-                    elliottWaveRadar.showNotification('مرحباً بك في رادار موجات إليوت المتقدم! 🎉', 'success');
-                    localStorage.setItem('hasVisited', 'true');
-                }, 1000);
-            }
-        });
-        
-        // Global error handler
-        window.addEventListener('error', function(e) {
-            console.error('خطأ في التطبيق:', e.error);
-            if (typeof elliottWaveRadar !== 'undefined') {
-                elliottWaveRadar.showNotification('حدث خطأ غير متوقع. يرجى إعادة تحميل الصفحة.', 'error');
-            }
-        });
-        
-        // Handle offline/online status
-        window.addEventListener('online', function() {
-            if (typeof elliottWaveRadar !== 'undefined') {
-                elliottWaveRadar.showNotification('تم استعادة الاتصال بالإنترنت 🌐', 'success');
-            }
-        });
-        
-        window.addEventListener('offline', function() {
-            if (typeof elliottWaveRadar !== 'undefined') {
-                elliottWaveRadar.showNotification('لا يوجد اتصال بالإنترنت. بعض الميزات قد لا تعمل.', 'warning');
-            }
-        });
-    </script>
-     <script src="elliott-wave.js"></script>
+    <script src="elliott-wave.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
