@@ -777,7 +777,7 @@ getBestEntryTime(pattern) {
             'extension_or_new_cycle': 'امتداد أو دورة جديدة',
             'corrective_phase': 'مرحلة تصحيحية',
             'correction_completion': 'اكتمال التصحيح',
-            'new_impulse_starting': 'بداية دفعة جديدة',
+            'new_impulse_starting': 'بداية موجة دافعة جديدة',
             'wave_1': 'الموجة الأولى',
             'wave_2': 'الموجة الثانية',
             'wave_3': 'الموجة الثالثة',
