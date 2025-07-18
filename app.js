@@ -582,7 +582,10 @@ formatRecommendation(result) {
 
     const entry = parseFloat(recommendation.entry) || 0;
 
-    return `
+    // أدوات مساعدة للتأكد من وجود القيم
+    const safe = (val) => val !== undefined && val !== null && val !== '' ? val : null;
+
+    let output = `
 📊 التحليل الفني
 النمط:
 ${this.translatePattern(pattern.type)}
@@ -625,40 +628,31 @@ $${parseFloat(targets.stopLoss).toFixed(4)}
 🔍 تحليل الموجة التفصيلي
 الموجة الحالية:
 ${this.translateWave(wave?.currentWave)}
+`;
 
-المرحلة:
-${waveAnalysis.phase}
+    if (safe(waveAnalysis.phase)) output += `\nالمرحلة:\n${waveAnalysis.phase}`;
+    if (safe(waveAnalysis.nextExpectation)) output += `\nالتوقع القادم:\n${waveAnalysis.nextExpectation}`;
+    if (safe(waveAnalysis.cycleType)) output += `\nنوع الدورة:\n${waveAnalysis.cycleType}`;
+    if (safe(waveAnalysis.waveStrength)) output += `\nقوة الموجة:\n${waveAnalysis.waveStrength}`;
+    if (safe(waveAnalysis.nextWave)) output += `\nالموجة المتوقعة التالية:\n${waveAnalysis.nextWave}`;
 
-التوقع القادم:
-${waveAnalysis.nextExpectation}
-
-نوع الدورة:
-${waveAnalysis.cycleType}
-
-قوة الموجة:
-${waveAnalysis.waveStrength}
-
-الموجة المتوقعة التالية:
-${waveAnalysis.nextWave}
-
+    output += `
 📈 استراتيجية التداول
 نقطة الدخول المثلى:
 $${entry.toFixed(4)}
+`;
 
-حجم المركز المقترح:
-${strategy.positionSize}
+    if (safe(strategy.positionSize)) output += `\nحجم المركز المقترح:\n${strategy.positionSize}`;
+    if (safe(strategy.riskReward)) output += `\nنسبة المخاطرة/العائد:\n${strategy.riskReward}`;
+    if (safe(strategy.expectedDuration)) output += `\nمدة الصفقة المتوقعة:\n${strategy.expectedDuration}`;
+    if (safe(strategy.bestEntryTime)) output += `\nأفضل وقت للدخول:\n${strategy.bestEntryTime}`;
 
-نسبة المخاطرة/العائد:
-${strategy.riskReward}
-
-مدة الصفقة المتوقعة:
-${strategy.expectedDuration}
-
-أفضل وقت للدخول:
-${strategy.bestEntryTime}
+    output += `
 
 #ElliottWave #Crypto #توصيات_فنية
-    `.trim();
+`.trim();
+
+    return output;
 }
 
 
