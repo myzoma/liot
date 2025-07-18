@@ -154,5 +154,53 @@
 
     <script src="elliott-wave.js"></script>
     <script src="app.js"></script>
+    <script>
+// التأكد من تهيئة الرادار بعد تحميل جميع المكتبات
+document.addEventListener('DOMContentLoaded', function() {
+    // انتظار تحميل Chart.js و FontAwesome
+    setTimeout(() => {
+        if (typeof Chart !== 'undefined' && typeof ElliottWaveAnalyzer !== 'undefined') {
+            console.log('All dependencies loaded, initializing radar...');
+            
+            // التأكد من عدم وجود مثيل سابق
+            if (window.radar) {
+                if (window.radar.chart) {
+                    window.radar.chart.destroy();
+                }
+            }
+            
+            // إنشاء مثيل جديد
+            window.radar = new ElliottWaveRadar();
+            console.log('Radar initialized successfully');
+        } else {
+            console.error('Dependencies not loaded yet');
+            // إعادة المحاولة بعد ثانية
+            setTimeout(arguments.callee, 1000);
+        }
+    }, 500);
+});
+
+// وظيفة مساعدة لعرض التوصيات
+function showRecommendation(symbol) {
+    if (window.radar && typeof window.radar.showRecommendation === 'function') {
+        window.radar.showRecommendation(symbol);
+    } else {
+        console.error('Radar not initialized or showRecommendation method not available');
+        // محاولة إعادة التهيئة
+        if (typeof ElliottWaveRadar !== 'undefined') {
+            window.radar = new ElliottWaveRadar();
+            setTimeout(() => {
+                if (window.radar && typeof window.radar.showRecommendation === 'function') {
+                    window.radar.showRecommendation(symbol);
+                }
+            }, 1000);
+        }
+    }
+}
+
+// إضافة الوظيفة للنافذة العامة
+window.showRecommendation = showRecommendation;
+</script>
+
 </body>
 </html>
