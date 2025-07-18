@@ -2,154 +2,126 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>شارت موجات إليوت مع الشموع والترقيم</title>
+    <title>شارت موجات إليوت مع Plotly Candlestick</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        body { background:#222; color:#fff; font-family:tahoma; text-align:center }
-        canvas { background:#111; margin:20px auto; display:block; border-radius:12px; }
-        .results { margin:24px auto; width:800px; text-align:left; background:#1a1a2e; border-radius:10px; padding:20px; }
-        .wave-label { font-weight:bold; font-size:18px; }
-        .error { color:#ff4757; margin-top:20px; }
+        body { background: #222; color: #fff; font-family: Tahoma; text-align: center }
+        #plotly_chart { margin: 40px auto; width: 900px; height: 500px; }
+        .results { margin: 24px auto; width: 900px; background:#1a1a2e; border-radius:10px; padding:20px; text-align: left; }
+        .wave-label { font-weight: bold; font-size: 18px; }
+        .error { color: #ff4757; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <h2>شارت موجات إليوت مع الشموع والترقيم</h2>
-    <canvas id="elliottCandles" width="900" height="400"></canvas>
+    <h2>شارت موجات إليوت مع Plotly Candlestick</h2>
+    <div id="plotly_chart"></div>
     <div id="analysisResult" class="results"></div>
     <script src="elliott-wave.js"></script>
     <script>
-        // بيانات أسعار تجريبية (يمكنك استبدالها ببيانات حقيقية أو بيانات Binance)
+        // بيانات أسعار تجريبية أو من السوق الحقيقي (يمكنك استبدالها لاحقاً)
         const klineData = [
-            [1, "100", "105", "99", "104", "1500"],
-            [2, "104", "108", "103", "107", "1700"],
-            [3, "107", "109", "105", "106", "1600"],
-            [4, "106", "110", "104", "110", "1800"],
-            [5, "110", "115", "109", "114", "2000"],
-            [6, "114", "116", "111", "112", "1900"],
-            [7, "112", "113", "110", "111", "1200"],
-            [8, "111", "115", "109", "114", "1400"],
-            [9, "114", "117", "112", "116", "1700"],
-            [10, "116", "119", "115", "118", "1800"],
-            [11, "118", "120", "117", "119", "1600"],
-            [12, "119", "122", "118", "121", "1850"],
-            [13, "121", "123", "120", "122", "1750"],
-            [14, "122", "124", "121", "123", "1600"],
-            [15, "123", "126", "122", "125", "1900"],
-            [16, "125", "128", "124", "127", "2000"],
-            [17, "127", "130", "126", "129", "2100"],
-            [18, "129", "132", "128", "131", "2200"],
-            [19, "131", "134", "130", "133", "2300"],
-            [20, "133", "136", "132", "135", "2400"]
-        ];
+            [1690000000000, "100", "105", "99", "104", "1500"],
+            [1690003600000, "104", "108", "103", "107", "1700"],
+            [1690007200000, "107", "109", "105", "106", "1600"],
+            [1690010800000, "106", "110", "104", "110", "1800"],
+            [1690014400000, "110", "115", "109", "114", "2000"],
+            [1690018000000, "114", "116", "111", "112", "1900"],
+            [1690021600000, "112", "113", "110", "111", "1200"],
+            [1690025200000, "111", "115", "109", "114", "1400"],
+            [1690028800000, "114", "117", "112", "116", "1700"],
+            [1690032400000, "116", "119", "115", "118", "1800"],
+            [1690036000000, "118", "120", "117", "119", "1600"],
+            [1690039600000, "119", "122", "118", "121", "1850"],
+            [1690043200000, "121", "123", "120", "122", "1750"],
+            [1690046800000, "122", "124", "121", "123", "1600"],
+            [1690050400000, "123", "126", "122", "125", "1900"],
+            [1690054000000, "125", "128", "124", "127", "2000"],
+            [1690057600000, "127", "130", "126", "129", "2100"],
+            [1690061200000, "129", "132", "128", "131", "2200"],
+            [1690064800000, "131", "134", "130", "133", "2300"],
+            [1690068400000, "133", "136", "132", "135", "2400"]
+        ]; // استخدم بياناتك الحقيقية هنا!
 
-        // استخدم محلل موجات إليوت
+        // استخدم المحلل
         const analyzer = new ElliottWaveAnalyzer();
         const analysis = analyzer.analyze(klineData);
 
-        // رسم الشموع مع ترقيم الموجات
-        function drawCandles(kline, analysis) {
-            const canvas = document.getElementById('elliottCandles');
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width, h = canvas.height, pad = 60;
-            const candleWidth = Math.floor((w - 2*pad) / kline.length * 0.8);
+        // تجهيز بيانات الشموع لـ Plotly
+        const times  = klineData.map(k => new Date(Number(k[0])));
+        const open   = klineData.map(k => Number(k[1]));
+        const high   = klineData.map(k => Number(k[2]));
+        const low    = klineData.map(k => Number(k[3]));
+        const close  = klineData.map(k => Number(k[4]));
 
-            // استخراج أسعار عالية ومنخفضة
-            const highs = kline.map(k => parseFloat(k[2]));
-            const lows = kline.map(k => parseFloat(k[3]));
-            const minP = Math.min(...lows), maxP = Math.max(...highs);
-            const xStep = (w - 2*pad) / kline.length;
-
-            // رسم المحور
-            ctx.clearRect(0,0,w,h);
-            ctx.strokeStyle = "#444";
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(pad, h - pad);
-            ctx.lineTo(w - pad, h - pad);
-            ctx.moveTo(pad, pad);
-            ctx.lineTo(pad, h - pad);
-            ctx.stroke();
-
-            // رسم الشموع
-            for (let i = 0; i < kline.length; i++) {
-                const [_, open, high, low, close] = kline[i].map(Number);
-                const x = pad + i * xStep + xStep / 2;
-                const yHigh = pad + (h - 2*pad) * (1 - (high - minP)/(maxP-minP));
-                const yLow = pad + (h - 2*pad) * (1 - (low - minP)/(maxP-minP));
-                const yOpen = pad + (h - 2*pad) * (1 - (open - minP)/(maxP-minP));
-                const yClose = pad + (h - 2*pad) * (1 - (close - minP)/(maxP-minP));
-
-                // لون الشمعة
-                const up = close >= open;
-                ctx.strokeStyle = up ? "#00ff88" : "#ff4757";
-                ctx.lineWidth = 2;
-
-                // فتيلة الشمعة
-                ctx.beginPath();
-                ctx.moveTo(x, yHigh);
-                ctx.lineTo(x, yLow);
-                ctx.stroke();
-
-                // جسم الشمعة
-                ctx.beginPath();
-                ctx.rect(x - candleWidth/2, Math.min(yOpen, yClose), candleWidth, Math.abs(yOpen - yClose));
-                ctx.fillStyle = up ? "#00ff88" : "#ff4757";
-                ctx.globalAlpha = 0.7;
-                ctx.fill();
-                ctx.globalAlpha = 1.0;
-                ctx.stroke();
-
-            }
-
-            // رسم نقاط الموجة وترقيمها
-            if (analysis.patterns && analysis.patterns.length > 0) {
-                const pattern = analysis.patterns[0];
-                pattern.points.forEach((pt, idx) => {
-                    const x = pad + pt.index * xStep + xStep / 2;
-                    const y = pad + (h - 2*pad) * (1 - (pt.price - minP)/(maxP-minP));
-
-                    ctx.beginPath();
-                    ctx.arc(x, y, 12, 0, 2*Math.PI);
-                    ctx.fillStyle = pattern.type === 'motive' ? "#ffba08" : "#ffa502";
-                    ctx.fill();
-
-                    ctx.font = "bold 18px Arial";
-                    ctx.fillStyle = "#222";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    const label = pattern.type === "motive" ? (idx+1) : String.fromCharCode(65+idx);
-                    ctx.fillText(label, x, y);
-
-                    // رسم خط بين النقاط
-                    if (idx > 0) {
-                        const prevPt = pattern.points[idx-1];
-                        const px = pad + prevPt.index * xStep + xStep / 2;
-                        const py = pad + (h - 2*pad) * (1 - (prevPt.price - minP)/(maxP-minP));
-                        ctx.strokeStyle = "#fff";
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.moveTo(px, py);
-                        ctx.lineTo(x, y);
-                        ctx.stroke();
-                    }
+        // تحضير نقاط موجات إليوت للترقيم
+        let annotations = [];
+        if (analysis.patterns && analysis.patterns.length > 0) {
+            const pattern = analysis.patterns[0];
+            pattern.points.forEach((pt, idx) => {
+                const x = times[pt.index];
+                const y = pt.price;
+                const label = pattern.type === "motive" ? (idx + 1) : String.fromCharCode(65 + idx); // 1,2,3... أو A,B,C...
+                annotations.push({
+                    x: x,
+                    y: y,
+                    text: label,
+                    xref: 'x',
+                    yref: 'y',
+                    showarrow: true,
+                    arrowhead: 2,
+                    ax: 0,
+                    ay: -30,
+                    font: {
+                        color: pattern.type === "motive" ? "#ff4757" : "#ffa502",
+                        size: 18,
+                        family: "Tahoma"
+                    },
+                    bgcolor: "#fff",
+                    bordercolor: "#222"
                 });
-            }
+            });
         }
 
-        drawCandles(klineData, analysis);
+        // رسم الشارت بالشموع وترقيم موجات إليوت
+        Plotly.newPlot('plotly_chart', [{
+            x: times,
+            open: open,
+            high: high,
+            low: low,
+            close: close,
+            type: 'candlestick',
+            name: 'الشموع'
+        }], {
+            margin: { t: 30, r: 30, l: 50, b: 50 },
+            plot_bgcolor: "#111",
+            paper_bgcolor: "#222",
+            annotations: annotations,
+            xaxis: {
+                title: "الزمن",
+                color: "#fff",
+                rangeslider: { visible: false },
+                showgrid: false
+            },
+            yaxis: {
+                title: "السعر",
+                color: "#fff",
+                showgrid: true
+            }
+        });
 
         // عرض النتائج النصية والتحليل
         function showAnalysis(analysis) {
             const div = document.getElementById("analysisResult");
-            if (!analysis || !analysis.patterns || analysis.patterns.length === 0)
+            if (!analysis || !analysis.patterns || analysis.patterns.length === 0) {
                 return div.innerHTML = '<div class="error">لم يتم العثور على نمط موجات إليوت صالح في البيانات.</div>';
-
+            }
             const pattern = analysis.patterns[0];
             let html = `
                 <h3>نتيجة التحليل:</h3>
                 <p><span class="wave-label">النمط:</span> ${pattern.type === 'motive' ? 'دافع (1-2-3-4-5)' : 'تصحيحي (A-B-C)'}</p>
                 <p><span class="wave-label">الاتجاه:</span> ${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}</p>
                 <p><span class="wave-label">الثقة:</span> ${pattern.confidence}%</p>
-                <p><span class="wave-label">موجات التحليل:</span> ${pattern.points.map((pt, idx) => pattern.type === 'motive' ? (idx+1) : String.fromCharCode(65+idx)).join(' - ')}</p>
+                <p><span class="wave-label">موجات التحليل:</span> ${pattern.points.map((pt, idx) => pattern.type === 'motive' ? (idx + 1) : String.fromCharCode(65 + idx)).join(' - ')}</p>
                 <p><span class="wave-label">الهدف المتوقع:</span> $${pattern.targets.finalTarget.toFixed(2)}</p>
                 <p><span class="wave-label">الدعم:</span> $${pattern.targets.support.toFixed(2)} | <span class="wave-label">المقاومة:</span> $${pattern.targets.resistance.toFixed(2)}</p>
                 <hr>
