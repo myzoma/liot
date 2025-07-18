@@ -574,101 +574,59 @@ getBestEntryTime(pattern) {
 
 
 
-
-
-    
+// تحديث دالة formatRecommendation لتشمل تحليل الموجة
 formatRecommendation(result) {
-    const { symbol, pattern, targets, recommendation, wave, waveAnalysis, strategy } = result;
-
-    const entryPrice = typeof recommendation.entry === 'number'
-        ? recommendation.entry
-        : parseFloat(recommendation.entry) || 0;
-
+    const { symbol, pattern, targets, recommendation, wave } = result;
+    
+    // التأكد من أن entry هو رقم
+    const entryPrice = typeof recommendation.entry === 'number' ? 
+        recommendation.entry : parseFloat(recommendation.entry) || 0;
+    
     return `
-📊 التحليل الفني
-النمط:
-${this.translatePattern(pattern.type)}
+🔥 توصية تداول - ${symbol}
 
-الاتجاه:
-${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}
+📊 التحليل الفني:
+• النمط: ${this.translatePattern(pattern.type)}
+• الاتجاه: ${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}
+• مستوى الثقة: ${pattern.confidence}%
+• الموجة الحالية: ${this.translateWave(wave?.currentWave || 'unknown')}
 
-مستوى الثقة:
-${pattern.confidence}%
+💡 التوصية:
+• الإجراء: ${recommendation.action}
+• نقطة الدخول: $${entryPrice.toFixed(4)}
+• الإطار الزمني: ${recommendation.timeframe}
+• مستوى المخاطرة: ${recommendation.riskLevel}
 
-الموجة الحالية:
-${this.translateWave(wave?.currentWave || 'غير معروف')}
+🎯 الأهداف:
+• الهدف الأول: $${targets.target1.toFixed(4)}
+• الهدف الثاني: $${targets.target2.toFixed(4)}
+• الهدف الثالث: $${targets.target3.toFixed(4)}
+• وقف الخسارة: $${targets.stopLoss.toFixed(4)}
 
-💡 توصية التداول
-الإجراء:
-${recommendation.action}
+🌊 تحليل الموجة التفصيلي:
+• الموجة الحالية: ${this.translateWave(wave?.currentWave || 'unknown')}
+• المرحلة: ${this.getWavePhase(wave)}
+• التوقع القادم: ${this.getWaveExpectation(pattern, wave)}
+• نوع الدورة: ${this.getWaveCycle(wave, pattern)}
+• قوة الموجة: ${this.getWaveStrength(pattern)}%
+• الموجة المتوقعة التالية: ${this.getNextWave(wave?.currentWave, pattern)}
 
-نقطة الدخول:
-$${entryPrice.toFixed(4)}
+📈 استراتيجية التداول:
+• حجم المركز المقترح: ${this.getPositionSize(recommendation.riskLevel)}
+• نسبة المخاطرة/العائد: ${this.getRiskRewardRatio(entryPrice, targets)}
+• مدة الصفقة المتوقعة: ${this.getTradeDuration(wave, pattern)}
+• أفضل وقت للدخول: ${this.getBestEntryTime(pattern)}
 
-الإطار الزمني:
-${recommendation.timeframe}
+⚠️ تحذيرات مهمة:
+• هذا التحليل مبني على نظرية موجات إليوت وليس نصيحة استثمارية
+• يُنصح بإجراء تحليل إضافي من مصادر متعددة قبل اتخاذ قرار التداول
+• استخدم إدارة المخاطر المناسبة ولا تخاطر بأكثر من 2% من رأس المال
+• راقب الأخبار والأحداث التي قد تؤثر على السوق
+• لا تستثمر أكثر مما يمكنك تحمل خسارته
 
-مستوى المخاطرة:
-${recommendation.riskLevel}
-
-🎯 الأهداف السعرية
-🎯 الهدف الأول:
-$${targets.target1.toFixed(4)}
-
-🎯 الهدف الثاني:
-$${targets.target2.toFixed(4)}
-
-🎯 الهدف الثالث:
-$${targets.target3.toFixed(4)}
-
-🛑 وقف الخسارة:
-$${targets.stopLoss.toFixed(4)}
-
-🔍 تحليل الموجة التفصيلي
-الموجة الحالية:
-${this.translateWave(wave?.currentWave || 'غير معروف')}
-
-المرحلة:
-${waveAnalysis?.phase || 'غير معروف'}
-
-التوقع القادم:
-${waveAnalysis?.expectation || 'غير معروف'}
-
-نوع الدورة:
-${waveAnalysis?.cycleType || 'غير معروف'}
-
-قوة الموجة:
-${waveAnalysis?.strength ? waveAnalysis.strength + '%' : 'غير معروف'}
-
-الموجة المتوقعة التالية:
-${waveAnalysis?.nextWave || 'غير معروف'}
-
-📈 استراتيجية التداول
-نقطة الدخول المثلى:
-$${entryPrice.toFixed(4)}
-
-حجم المركز المقترح:
-${strategy?.positionSize || 'غير معروف'}
-
-نسبة المخاطرة/العائد:
-${strategy?.riskReward || 'غير معروف'}
-
-مدة الصفقة المتوقعة:
-${strategy?.duration || 'غير معروف'}
-
-أفضل وقت للدخول:
-${strategy?.optimalEntryTime || 'غير معروف'}
-
-#ElliottWave #Crypto #Yaser
-`.trim();
+#ElliottWave #TechnicalAnalysis #Crypto #WaveAnalysis #Yaser
+    `.trim();
 }
-
-
-    return output;
-}
-
-
-
 
     copyRecommendation() {
         const modal = document.getElementById('recommendationModal');
