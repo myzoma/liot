@@ -296,63 +296,171 @@ class ElliottWaveRadar {
         container.appendChild(card);
     }
 
-    showRecommendation(symbol) {
-        const result = this.results.find(r => r.symbol === symbol);
-        if (!result) return;
+   showRecommendation(symbol) {
+    const result = this.results.find(r => r.symbol === symbol);
+    if (!result) return;
 
-        const { pattern, targets, recommendation, wave } = result;
-        const modal = document.getElementById('recommendationModal');
-        const modalBody = document.getElementById('modalBody');
-        
-        if (!modal || !modalBody) return;
+    const { pattern, targets, recommendation, wave } = result;
+    const modal = document.getElementById('recommendationModal');
+    const modalBody = document.getElementById('modalBody');
+    
+    if (!modal || !modalBody) return;
 
-        // التأكد من أن entry هو رقم
-        const entryPrice = typeof recommendation.entry === 'number' ? 
-            recommendation.entry : parseFloat(recommendation.entry) || 0;
-        
-        const recommendationText = this.formatRecommendation(result);
-        
-        modalBody.innerHTML = `
-            <div class="recommendation-content">
-                <h3><i class="fa-solid fa-coins"></i> ${symbol}</h3>
-                
-                <div class="recommendation-section">
-                    <h4><i class="fa-solid fa-chart-line"></i> تحليل فني</h4>
-                    <p><strong>النمط:</strong> ${this.translatePattern(pattern.type)}</p>
-                    <p><strong>الاتجاه:</strong> ${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}</p>
-                    <p><strong>مستوى الثقة:</strong> ${pattern.confidence}%</p>
-                    <p><strong>الموجة الحالية:</strong> ${this.translateWave(wave?.currentWave || 'unknown')}</p>
+    // التأكد من أن entry هو رقم
+    const entryPrice = typeof recommendation.entry === 'number' ? 
+        recommendation.entry : parseFloat(recommendation.entry) || 0;
+    
+    const recommendationText = this.formatRecommendation(result);
+    
+    // إضافة header للنافذة
+    let modalHeader = modal.querySelector('.modal-header');
+    if (!modalHeader) {
+        modalHeader = document.createElement('div');
+        modalHeader.className = 'modal-header';
+        modal.querySelector('.modal-content').insertBefore(modalHeader, modalBody);
+    }
+    
+    modalHeader.innerHTML = `
+        <i class="fa-solid fa-coins"></i>
+        توصية تداول - ${symbol}
+    `;
+    
+    modalBody.innerHTML = `
+        <div class="recommendation-content">
+            <!-- بطاقة التحليل الفني -->
+            <div class="recommendation-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <h4>التحليل الفني</h4>
                 </div>
-                
-                <div class="recommendation-section">
-                    <h4><i class="fa-solid fa-bullseye"></i> توصية التداول</h4>
-                    <p><strong>الإجراء:</strong> ${recommendation.action}</p>
-                    <p><strong>نقطة الدخول:</strong> $${entryPrice.toFixed(4)}</p>
-                    <p><strong>الإطار الزمني:</strong> ${recommendation.timeframe}</p>
-                    <p><strong>مستوى المخاطرة:</strong> ${recommendation.riskLevel}</p>
-                </div>
-                
-                <div class="recommendation-section">
-                    <h4><i class="fa-solid fa-target"></i> الأهداف ووقف الخسارة</h4>
-                    <p><strong>🎯 الهدف الأول:</strong> $${targets.target1.toFixed(4)}</p>
-                    <p><strong>🎯 الهدف الثاني:</strong> $${targets.target2.toFixed(4)}</p>
-                    <p><strong>🎯 الهدف الثالث:</strong> $${targets.target3.toFixed(4)}</p>
-                    <p><strong>🛑 وقف الخسارة:</strong> $${targets.stopLoss.toFixed(4)}</p>
-                
-                <div class="recommendation-section">
-                    <h4><i class="fa-solid fa-exclamation-triangle"></i> تحذيرات مهمة</h4>
-                    <p>• هذا التحليل مبني على نظرية موجات إليوت وليس نصيحة استثمارية</p>
-                    <p>• يُنصح بإجراء تحليل إضافي قبل اتخاذ قرار التداول</p>
-                    <p>• استخدم إدارة المخاطر المناسبة</p>
-                    <p>• لا تستثمر أكثر مما يمكنك تحمل خسارته</p>
+                <div class="card-content">
+                    <p>
+                        <strong>النمط:</strong>
+                        <span class="value">${this.translatePattern(pattern.type)}</span>
+                    </p>
+                    <p>
+                        <strong>الاتجاه:</strong>
+                        <span class="value ${pattern.direction === 'bullish' ? 'bullish' : 'bearish'}">
+                            ${pattern.direction === 'bullish' ? 'صاعد 🚀' : 'هابط 📉'}
+                        </span>
+                    </p>
+                    <p>
+                        <strong>مستوى الثقة:</strong>
+                        <span class="value">${pattern.confidence}%</span>
+                    </p>
+                    <p>
+                        <strong>الموجة الحالية:</strong>
+                        <span class="value">${this.translateWave(wave?.currentWave || 'unknown')}</span>
+                    </p>
                 </div>
             </div>
-        `;
 
-        modal.style.display = 'block';
-        modal.dataset.recommendationText = recommendationText;
+            <!-- بطاقة التوصية -->
+            <div class="recommendation-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <h4>توصية التداول</h4>
+                </div>
+                <div class="card-content">
+                    <p>
+                        <strong>الإجراء:</strong>
+                        <span class="value ${recommendation.action === 'شراء' ? 'bullish' : 'bearish'}">
+                            ${recommendation.action}
+                        </span>
+                    </p>
+                    <p>
+                        <strong>نقطة الدخول:</strong>
+                        <span class="value">$${entryPrice.toFixed(4)}</span>
+                    </p>
+                    <p>
+                        <strong>الإطار الزمني:</strong>
+                        <span class="value">${recommendation.timeframe}</span>
+                    </p>
+                    <p>
+                        <strong>مستوى المخاطرة:</strong>
+                        <span class="value">${recommendation.riskLevel}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- بطاقة الأهداف -->
+            <div class="recommendation-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-target"></i>
+                    <h4>الأهداف السعرية</h4>
+                </div>
+                <div class="card-content">
+                    <p>
+                        <strong>🎯 الهدف الأول:</strong>
+                        <span class="value bullish">$${targets.target1.toFixed(4)}</span>
+                    </p>
+                    <p>
+                        <strong>🎯 الهدف الثاني:</strong>
+                        <span class="value bullish">$${targets.target2.toFixed(4)}</span>
+                    </p>
+                    <p>
+                        <strong>🎯 الهدف الثالث:</strong>
+                        <span class="value bullish">$${targets.target3.toFixed(4)}</span>
+                    </p>
+                    <p>
+                        <strong>🛑 وقف الخسارة:</strong>
+                        <span class="value bearish">$${targets.stopLoss.toFixed(4)}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- بطاقة تحليل الموجة -->
+            <div class="recommendation-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-wave-square"></i>
+                    <h4>تحليل الموجة</h4>
+                </div>
+                <div class="card-content">
+                    <p>
+                        <strong>المرحلة:</strong>
+                        <span class="value">${this.getWavePhase(wave)}</span>
+                    </p>
+                    <p>
+                        <strong>التوقع:</strong>
+                        <span class="value">${this.getWaveExpectation(pattern, wave)}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- بطاقة التحذيرات -->
+            <div class="recommendation-card warning">
+                <div class="card-header">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                    <h4>تحذيرات مهمة</h4>
+                </div>
+                <div class="card-content">
+                    <p>• هذا التحليل مبني على نظرية موجات إليوت</p>
+                    <p>• ليس نصيحة استثمارية مالية</p>
+                    <p>• يُنصح بإجراء تحليل إضافي</p>
+                    <p>• استخدم إدارة المخاطر المناسبة</p>
+                    <p>• لا تستثمر أكثر مما تستطيع خسارته</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // إضافة footer إذا لم يكن موجوداً
+    let modalFooter = modal.querySelector('.modal-footer');
+    if (!modalFooter) {
+        modalFooter = document.createElement('div');
+        modalFooter.className = 'modal-footer';
+        modalFooter.innerHTML = `
+            <button id="copyRecommendation" class="copy-btn">
+                <i class="fa-solid fa-copy"></i>
+                نسخ التوصية
+            </button>
+        `;
+        modal.querySelector('.modal-content').appendChild(modalFooter);
     }
 
+    modal.style.display = 'block';
+    modal.dataset.recommendationText = recommendationText;
+}
     formatRecommendation(result) {
         const { symbol, pattern, targets, recommendation, wave } = result;
         
