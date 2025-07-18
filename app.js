@@ -3,6 +3,7 @@ class ElliottWaveRadar {
         this.symbols = [];
         this.results = [];
         this.chart = null;
+        this.isInitialized = false;
         this.stats = {
             total: 0,
             bullish: 0,
@@ -16,6 +17,7 @@ class ElliottWaveRadar {
         this.setupEventListeners();
         this.initChart();
         this.runRadar();
+        this.isInitialized = true;
     }
 
     setupEventListeners() {
@@ -29,14 +31,20 @@ class ElliottWaveRadar {
         });
 
         // Modal close
-        document.querySelector('.close').addEventListener('click', () => {
-            document.getElementById('recommendationModal').style.display = 'none';
-        });
+        const closeBtn = document.querySelector('.close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                document.getElementById('recommendationModal').style.display = 'none';
+            });
+        }
 
         // Copy recommendation
-        document.getElementById('copyRecommendation').addEventListener('click', () => {
-            this.copyRecommendation();
-        });
+        const copyBtn = document.getElementById('copyRecommendation');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                this.copyRecommendation();
+            });
+        }
 
         // Close modal on outside click
         window.addEventListener('click', (e) => {
@@ -51,9 +59,22 @@ class ElliottWaveRadar {
         // تدمير المخطط السابق إذا كان موجوداً
         if (this.chart) {
             this.chart.destroy();
+            this.chart = null;
         }
 
-        const ctx = document.getElementById('signalsChart').getContext('2d');
+        const canvas = document.getElementById('signalsChart');
+        if (!canvas) {
+            console.error('Canvas element not found');
+            return;
+        }
+
+        // التأكد من أن Canvas غير مستخدم
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
+        const ctx = canvas.getContext('2d');
         this.chart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -177,7 +198,7 @@ class ElliottWaveRadar {
         
         return {
             action: direction,
-            entry: currentPrice, // تأكد من أنه رقم
+            entry: currentPrice,
             confidence: confidence,
             timeframe: '1h - 4h',
             riskLevel: confidence > 85 ? 'منخفض' : confidence > 75 ? 'متوسط' : 'عالي'
@@ -193,10 +214,15 @@ class ElliottWaveRadar {
         ) : 0;
 
         // Update DOM
-        document.getElementById('totalSymbols').textContent = this.stats.total;
-        document.getElementById('bullishCount').textContent = this.stats.bullish;
-        document.getElementById('bearishCount').textContent = this.stats.bearish;
-        document.getElementById('avgConfidence').textContent = `${this.stats.avgConfidence}%`;
+        const totalEl = document.getElementById('totalSymbols');
+        const bullishEl = document.getElementById('bullishCount');
+        const bearishEl = document.getElementById('bearishCount');
+        const avgEl = document.getElementById('avgConfidence');
+
+        if (totalEl) totalEl.textContent = this.stats.total;
+        if (bullishEl) bullishEl.textContent = this.stats.bullish;
+        if (bearishEl) bearishEl.textContent = this.stats.bearish;
+        if (avgEl) avgEl.textContent = `${this.stats.avgConfidence}%`;
 
         // Update chart
         if (this.chart) {
@@ -211,6 +237,8 @@ class ElliottWaveRadar {
 
     renderCard(result) {
         const container = document.getElementById("results");
+        if (!container) return;
+
         const { symbol, pattern, trend, wave, targets, recommendation } = result;
         
         const trendIcon = pattern.direction === 'bullish' ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger';
@@ -253,11 +281,17 @@ class ElliottWaveRadar {
                 <p>التوقع: ${this.getWaveExpectation(pattern, wave)}</p>
             </div>
             
-            <button class="recommendation-btn" onclick="window.radar.showRecommendation('${symbol}')">
+            <button class="recommendation-btn" data-symbol="${symbol}">
                 <i class="fa-solid fa-lightbulb"></i>
                 عرض التوصية الكاملة
             </button>
         `;
+        
+        // إضافة event listener للزر
+        const btn = card.querySelector('.recommendation-btn');
+        btn.addEventListener('click', () => {
+            this.showRecommendation(symbol);
+        });
         
         container.appendChild(card);
     }
@@ -270,6 +304,8 @@ class ElliottWaveRadar {
         const modal = document.getElementById('recommendationModal');
         const modalBody = document.getElementById('modalBody');
         
+        if (!modal || !modalBody) return;
+
         // التأكد من أن entry هو رقم
         const entryPrice = typeof recommendation.entry === 'number' ? 
             recommendation.entry : parseFloat(recommendation.entry) || 0;
@@ -302,7 +338,6 @@ class ElliottWaveRadar {
                     <p><strong>🎯 الهدف الثاني:</strong> $${targets.target2.toFixed(4)}</p>
                     <p><strong>🎯 الهدف الثالث:</strong> $${targets.target3.toFixed(4)}</p>
                     <p><strong>🛑 وقف الخسارة:</strong> $${targets.stopLoss.toFixed(4)}</p>
-                </div>
                 
                 <div class="recommendation-section">
                     <h4><i class="fa-solid fa-exclamation-triangle"></i> تحذيرات مهمة</h4>
@@ -313,6 +348,7 @@ class ElliottWaveRadar {
                 </div>
             </div>
         `;
+
         modal.style.display = 'block';
         modal.dataset.recommendationText = recommendationText;
     }
@@ -450,7 +486,10 @@ class ElliottWaveRadar {
         const loadingElement = document.getElementById("loading");
         
         try {
-            loadingElement.querySelector('p').textContent = "🔄 جاري جلب قائمة العملات...";
+            const loadingP = loadingElement.querySelector('p');
+            if (loadingP) {
+                loadingP.textContent = "🔄 جاري جلب قائمة العملات...";
+            }
             
             this.symbols = await this.fetchTopSymbols(100);
             
@@ -464,7 +503,9 @@ class ElliottWaveRadar {
                 return;
             }
             
-            loadingElement.querySelector('p').textContent = `🔄 جاري تحليل ${this.symbols.length} عملة...`;
+            if (loadingP) {
+                loadingP.textContent = `🔄 جاري تحليل ${this.symbols.length} عملة...`;
+            }
             
             // تحليل العملات بشكل متتالي مع تأخير لتجنب حدود API
             for (let i = 0; i < this.symbols.length; i++) {
@@ -473,9 +514,9 @@ class ElliottWaveRadar {
                     
                     // تحديث شريط التقدم
                     const progress = Math.round(((i + 1) / this.symbols.length) * 100);
-                    const loadingP = loadingElement.querySelector('p');
-                    if (loadingP) {
-                        loadingP.textContent = 
+                    const currentLoadingP = loadingElement.querySelector('p');
+                    if (currentLoadingP) {
+                        currentLoadingP.textContent = 
                             `🔄 تم تحليل ${i + 1} من ${this.symbols.length} عملة (${progress}%)`;
                     }
                     
@@ -678,15 +719,70 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// متغير عام للتطبيق
+let radarInstance = null;
+
 // تهيئة التطبيق
-let radar;
+function initializeRadar() {
+    if (radarInstance) {
+        // تدمير المثيل السابق إذا كان موجوداً
+        if (radarInstance.chart) {
+            radarInstance.chart.destroy();
+        }
+    }
+    
+    radarInstance = new ElliottWaveRadar();
+    
+    // إضافة المثيل للنافذة العامة للوصول إليه من HTML
+    window.radar = radarInstance;
+    
+    return radarInstance;
+}
+
+// تهيئة عند تحميل DOM
 document.addEventListener('DOMContentLoaded', () => {
-    radar = new ElliottWaveRadar();
+    console.log('DOM loaded, initializing radar...');
+    initializeRadar();
 });
 
-// إضافة وظائف مساعدة للنافذة العامة
+// تهيئة إضافية عند تحميل النافذة
 window.addEventListener('load', () => {
-    if (!window.radar) {
-        window.radar = new ElliottWaveRadar();
+    console.log('Window loaded, ensuring radar is initialized...');
+    if (!window.radar || !window.radar.isInitialized) {
+        initializeRadar();
     }
 });
+
+// وظائف مساعدة عامة
+window.showRecommendation = function(symbol) {
+    if (window.radar && window.radar.showRecommendation) {
+        window.radar.showRecommendation(symbol);
+    } else {
+        console.error('Radar instance not available');
+    }
+};
+
+// إضافة معالج للأخطاء العامة
+window.addEventListener('error', (e) => {
+    console.error('Global error:', e.error);
+    
+    // إعادة تهيئة الرادار في حالة حدوث خطأ في Chart.js
+    if (e.error && e.error.message && e.error.message.includes('Canvas is already in use')) {
+        console.log('Chart.js error detected, reinitializing...');
+        setTimeout(() => {
+            initializeRadar();
+        }, 1000);
+    }
+});
+
+// إضافة معالج لإعادة تحميل الصفحة
+window.addEventListener('beforeunload', () => {
+    if (window.radar && window.radar.chart) {
+        window.radar.chart.destroy();
+    }
+});
+
+// تصدير الكلاس للاستخدام الخارجي
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ElliottWaveRadar;
+}
