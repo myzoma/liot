@@ -2636,16 +2636,18 @@ class ElliottWaveRadar {
 }
 
 // تصدير الكلاس للاستخدام
-//if (typeof module !== 'undefined' && module.exports) {
- //   module.exports = new ElliottWaveRadar();
-;
-//} else if (typeof window !== 'undefined') {
-  //  window.ElliottWaveRadarEnhanced = ElliottWaveRadarEnhanced;
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ElliottWaveRadar;
+} else if (typeof window !== 'undefined') {
+    window.ElliottWaveRadar = ElliottWaveRadar;
 }
+
 
 // مثال على الاستخدام
 /*
-const analyzer = new ElliottWaveRadarEnhanced();
+const analyzer =new ElliottWaveRadar();
+;
+d();
 
 // بيانات الأسعار (مثال)
 const priceData = [100, 105, 103, 108, 106, 112, 110, 115, 113, 118, 116, 120];
