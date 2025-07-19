@@ -290,7 +290,7 @@ renderCard(result) {
             complexPatterns: this.analyzeComplexPatterns(prices, highs, lows),
             
             // تحليل دورة الموجة الكاملة
-            waveCount: this.getWaveCount(result.currentWaveAnalysis),
+            //waveCount: this.getWaveCount(result.currentWaveAnalysis),
             
             // تحديد نوع الموجة الرئيسي
             primaryWaveType: this.determinePrimaryWaveType(pattern, result),
