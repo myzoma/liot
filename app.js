@@ -137,7 +137,7 @@ class ElliottWaveRadar {
                         
             if (result.status === 'success' && result.patterns.length > 0) {
                 const pattern = result.patterns[0];
-                //if (pattern.confidence >= 75) {
+                if (pattern.confidence >= 75) {
                     // تحليل شامل لجميع أنواع الموجات
                     const completeWaveAnalysis = this.performCompleteWaveAnalysis(data, pattern, result);
                     
