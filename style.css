@@ -1572,3 +1572,126 @@ select:focus {
         transition-duration: 0.01ms !important;
     }
 }
+/* أنماط عرض الصور */
+.elliott-images-container {
+    margin-top: 30px;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    border: 1px solid rgba(0, 212, 170, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.elliott-images-container h3 {
+    color: #00d4aa;
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.image-item {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 170, 0.2);
+    transition: all 0.3s ease;
+}
+
+.image-item:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 212, 170, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 212, 170, 0.1);
+}
+
+.image-item h4 {
+    color: #00d4aa;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.image-item img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 212, 170, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.image-item img:hover {
+    transform: scale(1.02);
+}
+
+/* تحسين أزرار الفلترة */
+.filter-btn {
+    transition: all 0.3s ease;
+}
+
+#generateImages {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#generateImages:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+}
+
+/* تحسين أزرار المودال */
+.btn-secondary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+}
+
+/* استجابة للشاشات الصغيرة */
+@media (max-width: 768px) {
+    .images-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .image-item {
+        padding: 15px;
+    }
+    
+    .elliott-images-container {
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .btn-secondary {
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+    }
+}
+
+/* تحسين عرض الصور في الوضع المظلم */
+@media (prefers-color-scheme: dark) {
+    .image-item img {
+        filter: brightness(0.9);
+    }
+    
+    .image-item img:hover {
+        filter: brightness(1);
+    }
+}
