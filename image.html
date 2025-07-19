@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تحليل موجات إليوت من بينانس</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: white;
+            padding: 20px;
+        }
+        #results {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .image-container {
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 5px;
+            background: #16213e;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #00d4aa;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        select, input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>تحليل موجات إليوت - بيانات مباشرة من بينانس</h1>
+    
+    <div>
+        <select id="symbolSelect">
+            <option value="BTCUSDT">BTC/USDT</option>
+            <option value="ETHUSDT">ETH/USDT</option>
+            <option value="BNBUSDT">BNB/USDT</option>
+            <option value="ADAUSDT">ADA/USDT</option>
+        </select>
+        
+        <button onclick="runAnalysis()">تشغيل التحليل</button>
+    </div>
+    
+    <div id="loading" style="display:none; color:#00d4aa;">جاري تحميل البيانات والتحليل...</div>
+    
+    <div id="results"></div>
+
+    <!-- تحميل ملفات JS -->
+    <script src="elliott-wave.js"></script>
+    <script src="elliott-wave-image-generator.js"></script>
+    
+    <script>
+        async function runAnalysis() {
+            const symbol = document.getElementById('symbolSelect').value;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            
+            try {
+                // 1. جلب بيانات من API بينانس
+                const response = await fetch(`https://api1.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=100`);
+                const klineData = await response.json();
+                
+                // 2. تحويل البيانات للتنسيق المطلوب
+                const formattedData = klineData.map(item => ({
+                    time: item[0],
+                    open: parseFloat(item[1]),
+                    high: parseFloat(item[2]),
+                    low: parseFloat(item[3]),
+                    close: parseFloat(item[4]),
+                    volume: parseFloat(item[5])
+                }));
+                
+                // 3. إنشاء المحلل ومولد الصور
+                const analyzer = new ElliottWaveAnalyzer();
+                const imageGenerator = new ElliottWaveImageGenerator();
+                
+                // 4. تحليل البيانات
+                const analysis = analyzer.analyze(formattedData);
+                
+                // 5. توليد الصور
+                const images = await imageGenerator.generateCompleteImageSet(analysis);
+                
+                // 6. عرض النتائج
+                displayResults(images);
+                
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    `<p style="color:red;">حدث خطأ: ${error.message}</p>`;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        function displayResults(images) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            for (const [type, imageUrl] of Object.entries(images)) {
+                const container = document.createElement('div');
+                container.className = 'image-container';
+                
+                const title = document.createElement('h3');
+                title.textContent = type === 'main' ? 'التحليل الرئيسي' : 
+                                  type === 'summary' ? 'ملخص سريع' : 'تفاصيل النمط';
+                
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.style.maxWidth = '100%';
+                
+                container.appendChild(title);
+                container.appendChild(img);
+                resultsDiv.appendChild(container);
+            }
+        }
+    </script>
+</body>
+</html>
