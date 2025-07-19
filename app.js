@@ -213,7 +213,54 @@ class ElliottWaveRadar {
             console.warn(`❌ خطأ في تحليل ${symbol}:`, error.message);
         }
     }
+renderCard(result) {
+    const container = document.getElementById("results");
+    if (!container) return; // تحقق من وجود العنصر
 
+    const { symbol, pattern, trend, wave, targets, recommendation } = result;
+
+    // تحقق من وجود بيانات الأهداف
+    if (!targets || !targets.target1 || !targets.target2 || !targets.target3 || !targets.stopLoss) {
+        console.warn('بيانات الأهداف ناقصة لهذه العملة:', symbol, targets);
+        return;
+    }
+
+    const trendIcon = pattern.direction === 'bullish' ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger';
+    const waveText = wave?.currentWave ? wave.currentWave : 'غير محددة';
+    const confidenceClass = pattern.confidence >= 85 ? 'text-success' : pattern.confidence >= 75 ? 'text-warning' : 'text-danger';
+
+    const card = document.createElement("div");
+    card.className = "card fade-in";
+    card.dataset.direction = pattern.direction;
+    card.dataset.confidence = pattern.confidence >= 85 ? 'high' : 'normal';
+
+    card.innerHTML = `
+        <h2><i class="fa-solid fa-coins"></i> ${symbol}</h2>
+        <p><i class="fa-solid fa-chart-line"></i> النمط: ${pattern.type} 
+           <span class="${pattern.direction === 'bullish' ? 'text-success' : 'text-danger'}">
+               ${pattern.direction === 'bullish' ? '🚀 صاعد' : '📉 هابط'}
+           </span>
+        </p>
+        <p><i class="fa-solid fa-shield-halved"></i> الثقة: 
+           <span class="confidence ${confidenceClass}">${pattern.confidence}%</span>
+        </p>
+        <p><i class="fa-solid fa-location-crosshairs"></i> الموجة الحالية: ${waveText}</p>
+        <p><i class="fa-solid ${trendIcon}"></i> الاتجاه العام: ${trend}</p>
+        <div class="price-targets">
+            <h4><i class="fa-solid fa-bullseye"></i> الأهداف السعرية</h4>
+            <p>🎯 الهدف الأول: $${targets.target1.toFixed(4)}</p>
+            <p>🎯 الهدف الثاني: $${targets.target2.toFixed(4)}</p>
+            <p>🎯 الهدف الثالث: $${targets.target3.toFixed(4)}</p>
+            <p>🛑 وقف الخسارة: $${targets.stopLoss.toFixed(4)}</p>
+        </div>
+        <button class="recommendation-btn" onclick="window.radar.showRecommendation('${symbol}')">
+            <i class="fa-solid fa-lightbulb"></i>
+            عرض التوصية الكاملة
+        </button>
+    `;
+
+    container.appendChild(card);
+}
     // دالة جديدة للتحليل الشامل لجميع أنواع الموجات
     performCompleteWaveAnalysis(data, pattern, result) {
         const prices = data.map(d => parseFloat(d[4]));
