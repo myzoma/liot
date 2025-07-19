@@ -56,7 +56,58 @@ class ElliottWaveRadar {
             }
         });
     }
-
+ async runRadar() {
+        const loadingElement = document.getElementById("loading");
+        
+        try {
+            loadingElement.querySelector('p').textContent = "🔄 جاري جلب قائمة العملات...";
+            
+            this.symbols = await this.fetchTopSymbols(100);
+            
+            if (this.symbols.length === 0) {
+                loadingElement.innerHTML = `
+                    <div class="error-message">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                        <p>❌ فشل في جلب قائمة العملات</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            loadingElement.querySelector('p').textContent = `🔄 جاري تحليل ${this.symbols.length} عملة...`;
+            
+            // تحليل العملات بشكل متتالي مع تأخير لتجنب حدود API
+            for (let i = 0; i < this.symbols.length; i++) {
+                setTimeout(() => {
+                    this.analyzeSymbol(this.symbols[i]);
+                    
+                    // تحديث شريط التقدم
+                    const progress = Math.round(((i + 1) / this.symbols.length) * 100);
+                    const loadingP = loadingElement.querySelector('p');
+                    if (loadingP) {
+                        loadingP.textContent = 
+                            `🔄 تم تحليل ${i + 1} من ${this.symbols.length} عملة (${progress}%)`;
+                    }
+                    
+                    // إخفاء شاشة التحميل عند الانتهاء
+                    if (i === this.symbols.length - 1) {
+                        setTimeout(() => {
+                            loadingElement.style.display = 'none';
+                        }, 2000);
+                    }
+                }, i * 600); // تأخير 600ms بين كل طلب
+            }
+            
+        } catch (error) {
+            console.error('خطأ في تشغيل الرادار:', error);
+            loadingElement.innerHTML = `
+                <div class="error-message">
+                    <i class="fa-solid fa-exclamation-triangle"></i>
+                    <p>❌ حدث خطأ في تشغيل الرادار</p>
+                </div>
+            `;
+        }
+    }
     initChart() {
         // تدمير المخطط السابق إذا كان موجوداً
         if (this.chart) {
