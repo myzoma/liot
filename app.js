@@ -2636,10 +2636,11 @@ class ElliottWaveRadar {
 }
 
 // تصدير الكلاس للاستخدام
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ElliottWaveRadarEnhanced;
-} else if (typeof window !== 'undefined') {
-    window.ElliottWaveRadarEnhanced = ElliottWaveRadarEnhanced;
+//if (typeof module !== 'undefined' && module.exports) {
+ //   module.exports = new ElliottWaveRadar();
+;
+//} else if (typeof window !== 'undefined') {
+  //  window.ElliottWaveRadarEnhanced = ElliottWaveRadarEnhanced;
 }
 
 // مثال على الاستخدام
