@@ -199,6 +199,25 @@ function showRecommendation(symbol) {
 window.showRecommendation = showRecommendation;
 </script>
      <script src="elliott-wave.js"></script>
+    <!-- إضافة قسم عرض الصور -->
+<div id="elliott-images" class="elliott-images-container" style="display: none;">
+    <h3>صور التحليل</h3>
+    <div class="images-grid">
+        <div class="image-item">
+            <h4>التحليل الرئيسي</h4>
+            <img id="main-image" alt="التحليل الرئيسي">
+        </div>
+        <div class="image-item">
+            <h4>الملخص السريع</h4>
+            <img id="summary-image" alt="الملخص السريع">
+        </div>
+        <div class="image-item" id="pattern-detail-container" style="display: none;">
+            <h4>تفاصيل النمط</h4>
+            <img id="pattern-detail-image" alt="تفاصيل النمط">
+        </div>
+    </div>
+</div>
+
     <script src="app.js"></script>
 </body>
 </html>
