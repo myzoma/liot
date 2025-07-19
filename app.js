@@ -25,7 +25,7 @@ class ElliottWaveRadar {
     init() {
         this.setupEventListeners();
         this.initChart();
-        //this.runRadar();
+        this.runRadar();
     }
 
     setupEventListeners() {
