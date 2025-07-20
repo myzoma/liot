@@ -1,206 +1,259 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>رادار موجات إليوت المتقدم</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محلل موجات إليوت</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .results {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        button {
+            background: #00d4aa;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #00b894;
+        }
+        select, input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            margin: 5px;
+        }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            color: #00d4aa;
+        }
+        .error {
+            color: #ff6b6b;
+            background: rgba(255,107,107,0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            color: #00d4aa;
+            background: rgba(0,212,170,0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .wave-analysis {
+            background: rgba(255,255,255,0.08);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #00d4aa;
+        }
+        .wave-pattern {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .wave-info {
+            flex: 1;
+        }
+        .wave-confidence {
+            background: #00d4aa;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-container">
-            <div class="logo">
-                <i class="fa-solid fa-wave-square"></i>
-                <span>رادار موجات إليوت المتقدم</span>
-            </div>
-            <nav class="nav">
-                <a href="#dashboard" class="nav-link active">
-                    <i class="fa-solid fa-chart-line"></i>
-                    لوحة التحكم
-                </a>
-                <a href="#settings" class="nav-link">
-                    <i class="fa-solid fa-cog"></i>
-                    الإعدادات
-                </a>
-            </nav>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 محلل موجات إليوت</h1>
+            <p>تحليل احترافي لموجات إليوت مع إنشاء الصور</p>
         </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="container">
-            <!-- Dashboard Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-coins"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="totalSymbols">0</h3>
-                        <p>العملات المحللة</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="bullishCount">0</h3>
-                        <p>إشارات صاعدة</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-chart-line-down"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="bearishCount">0</h3>
-                        <p>إشارات هابطة</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="avgConfidence">0%</h3>
-                        <p>متوسط الثقة</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chart Section -->
-            <div class="chart-section">
-                <div class="chart-header">
-                    <h2><i class="fa-solid fa-chart-pie"></i> توزيع الإشارات</h2>
-                </div>
-                <div class="chart-container">
-                    <canvas id="signalsChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Loading -->
-            <div class="loading-section" id="loading">
-                <div class="loading-spinner"></div>
-                <p>🔄 جاري فحص أول 100 عملة...</p>
-            </div>
-
-            <!-- Results -->
-            <div class="results-section">
-                <div class="results-header">
-                    <h2><i class="fa-solid fa-list"></i> نتائج التحليل</h2>
-                    <div class="filter-buttons">
-                    
-                        <button class="filter-btn active" data-filter="all">الكل</button>
-                        <button class="filter-btn" data-filter="bullish">صاعد</button>
-                        <button class="filter-btn" data-filter="bearish">هابط</button>
-                        <button class="filter-btn" data-filter="high-confidence">ثقة عالية</button>
-                    </div>
-                </div>
-                <div id="results" class="results-grid"></div>
-              
-            </div>
+        
+        <div class="controls">
+            <h3>إعدادات التحليل</h3>
+            <select id="symbolSelect">
+                <option value="BTCUSDT">Bitcoin (BTC/USDT)</option>
+                <option value="ETHUSDT">Ethereum (ETH/USDT)</option>
+                <option value="ADAUSDT">Cardano (ADA/USDT)</option>
+                <option value="BNBUSDT">Binance Coin (BNB/USDT)</option>
+                <option value="SOLUSDT">Solana (SOL/USDT)</option>
+            </select>
+                        
+            <select id="intervalSelect">
+                <option value="1h">ساعة واحدة</option>
+                <option value="4h">4 ساعات</option>
+                <option value="1d">يوم واحد</option>
+                <option value="1w">أسبوع واحد</option>
+            </select>
+                        
+            <input type="number" id="limitInput" value="100" min="50" max="500" placeholder="عدد الشموع">
+                        
+            <button onclick="runSingleAnalysis()">🚀 تحليل واحد</button>
+            <button onclick="runMultipleAnalysis()">📊 تحليل متعدد</button>
         </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-section">
-                <h3>رادار موجات إليوت</h3>
-                <p>أداة تحليل متقدمة لموجات إليوت في أسواق العملات الرقمية</p>
-            </div>
-            <div class="footer-section">
-                <h4>روابط مفيدة</h4>
-                <ul>
-                    <li><a href="#">دليل الاستخدام</a></li>
-                    <li><a href="#">نظرية موجات إليوت</a></li>
-                    <li><a href="#">الدعم الفني</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>تواصل معنا</h4>
-                <div class="social-links">
-                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                    <a href="#"><i class="fa-brands fa-telegram"></i></a>
-                    <a href="#"><i class="fa-brands fa-discord"></i></a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 رادار موجات إليوت. جميع الحقوق محفوظة.</p>
-        </div>
-    </footer>
-
-    <!-- Modal for Recommendations -->
-    <div id="recommendationModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>توصية التداول</h3>
-                <span class="close">&times;</span>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Content will be inserted here -->
-            </div>
-            <div class="modal-footer">
-                <button id="copyRecommendation" class="btn btn-primary">
-                    <i class="fa-solid fa-copy"></i>
-                    نسخ التوصية
-                </button>
-            </div>
-        </div>
+        
+        <div id="status"></div>
+        <div id="results" class="results" style="display:none;"></div>
     </div>
+
+    <!-- تضمين الملفات -->
+    <script src="elliott-wave.js"></script>
+    <script src="api.js"></script>
+    <script src="main.js"></script>
+        
     <script>
-// التأكد من تهيئة الرادار بعد تحميل جميع المكتبات
-document.addEventListener('DOMContentLoaded', function() {
-    // انتظار تحميل Chart.js و FontAwesome
-    setTimeout(() => {
-        if (typeof Chart !== 'undefined' && typeof ElliottWaveAnalyzer !== 'undefined') {
-            console.log('All dependencies loaded, initializing radar...');
+        let app;
+        
+        // تهيئة التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            app = new ElliottWaveApp();
+            showStatus('جاهز للتحليل', 'success');
+        });
+
+        // تشغيل تحليل واحد
+        async function runSingleAnalysis() {
+            const symbol = document.getElementById('symbolSelect').value;
+            const interval = document.getElementById('intervalSelect').value;
+            const limit = parseInt(document.getElementById('limitInput').value);
             
-            // التأكد من عدم وجود مثيل سابق
-            if (window.radar) {
-                if (window.radar.chart) {
-                    window.radar.chart.destroy();
-                }
+            showStatus('جاري التحليل...', 'loading');
+            
+            try {
+                const result = await app.analyzeSingle(symbol, interval, limit);
+                displayResults([result]);
+                showStatus('تم التحليل بنجاح!', 'success');
+            } catch (error) {
+                showStatus(`خطأ في التحليل: ${error.message}`, 'error');
             }
+        }
+
+        // تشغيل تحليل متعدد
+        async function runMultipleAnalysis() {
+            const symbols = ['BTCUSDT', 'ETHUSDT', 'ADAUSDT', 'BNBUSDT', 'SOLUSDT'];
+            const interval = document.getElementById('intervalSelect').value;
+            const limit = parseInt(document.getElementById('limitInput').value);
             
-            // إنشاء مثيل جديد
-            window.radar = new ElliottWaveRadar();
-            console.log('Radar initialized successfully');
-        } else {
-            console.error('Dependencies not loaded yet');
-            // إعادة المحاولة بعد ثانية
-            setTimeout(arguments.callee, 1000);
+            showStatus('جاري التحليل المتعدد...', 'loading');
+            
+            try {
+                const results = await app.analyzeMultiple(symbols, interval, limit);
+                displayResults(results);
+                showStatus('تم التحليل المتعدد بنجاح!', 'success');
+            } catch (error) {
+                showStatus(`خطأ في التحليل المتعدد: ${error.message}`, 'error');
+            }
         }
-    }, 500);
-});
 
-// وظيفة مساعدة لعرض التوصيات
-function showRecommendation(symbol) {
-    if (window.radar && typeof window.radar.showRecommendation === 'function') {
-        window.radar.showRecommendation(symbol);
-    } else {
-        console.error('Radar not initialized or showRecommendation method not available');
-        // محاولة إعادة التهيئة
-        if (typeof ElliottWaveRadar !== 'undefined') {
-            window.radar = new ElliottWaveRadar();
-            setTimeout(() => {
-                if (window.radar && typeof window.radar.showRecommendation === 'function') {
-                    window.radar.showRecommendation(symbol);
-                }
-            }, 1000);
+        // عرض الحالة
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
         }
-    }
-}
 
-// إضافة الوظيفة للنافذة العامة
-window.showRecommendation = showRecommendation;
-</script>
-     <script src="elliott-wave.js"></script>
-    <script src="app.js"></script>
+        // عرض النتائج
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.style.display = 'block';
+            
+            let html = '<h3>نتائج التحليل</h3>';
+            
+            results.forEach(result => {
+                html += `
+                    <div class="wave-analysis">
+                        <h4>${result.symbol} - ${result.interval}</h4>
+                        <div class="wave-pattern">
+                            <div class="wave-info">
+                                <strong>النمط المكتشف:</strong> ${result.pattern || 'غير محدد'}<br>
+                                <strong>الموجة الحالية:</strong> ${result.currentWave || 'غير محدد'}<br>
+                                <strong>الاتجاه:</strong> ${result.trend || 'غير محدد'}<br>
+                                <strong>السعر الحالي:</strong> ${result.currentPrice || 'غير متوفر'}
+                            </div>
+                            <div class="wave-confidence">
+                                ${result.confidence || 0}% ثقة
+                            </div>
+                        </div>
+                        
+                        ${result.levels ? `
+                            <div style="margin-top: 15px;">
+                                <strong>المستويات المهمة:</strong><br>
+                                <small>
+                                    المقاومة: ${result.levels.resistance || 'غير محدد'}<br>
+                                    الدعم: ${result.levels.support || 'غير محدد'}
+                                </small>
+                            </div>
+                        ` : ''}
+                        
+                        ${result.prediction ? `
+                            <div style="margin-top: 15px; padding: 10px; background: rgba(0,212,170,0.1); border-radius: 5px;">
+                                <strong>التوقع:</strong> ${result.prediction}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="chart-container">
+                            ${result.chartUrl ? 
+                                `<img src="${result.chartUrl}" alt="مخطط ${result.symbol}" style="max-width: 100%; max-height: 100%; border-radius: 5px;">` :
+                                '<div style="color: #666;">مخطط غير متوفر</div>'
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // معالجة الأخطاء العامة
+        window.addEventListener('error', function(e) {
+            showStatus(`خطأ في التطبيق: ${e.message}`, 'error');
+        });
+
+        // معالجة الأخطاء غير المعالجة
+        window.addEventListener('unhandledrejection', function(e) {
+            showStatus(`خطأ غير معالج: ${e.reason}`, 'error');
+        });
+    </script>
 </body>
 </html>
