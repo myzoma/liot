@@ -711,7 +711,7 @@ calculateConfidence(analysis) {
         // API متقدم للعملات المشفرة
         class AdvancedCryptoAPI {
             constructor() {
-                this.baseURL = 'https://api1.binance.com/api/v3';
+                this.baseURL = 'https://api1.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=200';
                 this.requestCount = 0;
                 this.rateLimitDelay = 200;
                 this.popularSymbols = [
