@@ -664,53 +664,49 @@
                     Math.abs(l.price - currentPrice) > currentPrice * 0.02
                 );
                 
-                if (nextFibLevel) {
-                    predictions.push({
-                        timeframe: 'medium',
-                        direction: nextFibLevel.price > currentPrice ? 'up' : 'down',
-                        target: nextFibLevel.price,
-                        probability: nextFibLevel.type === 'strong' ? 70 : 50,
-                        reasoning: `مستوى فيبوناتشي ${nextFibLevel.level}`
-                    });
-                }
-                
-                return predictions;
-            }
+              if (nextFibLevel) {
+    predictions.push({
+        timeframe: 'medium',
+        direction: nextFibLevel.price > currentPrice ? 'up' : 'down',
+        target: nextFibLevel.price,
+        probability: nextFibLevel.type === 'strong' ? 70 : 50,
+        reasoning: `مستوى فيبوناتشي ${nextFibLevel.level}`
+    });
+}
 
-            // حساب مستوى الثقة الإجمالي
-            calculateConfidence(analysis) {
-                let confidence = 0;
-                let factors = 0;
-                
-                // ثقة الموجات
-                if (analysis.waves.length > 0) {
-                    const avgWaveConfidence = analysis.waves.reduce((sum, w)
-                    const avgWaveConfidence = analysis.waves.reduce((sum, w) => sum + w.confidence, 0) / analysis.waves.length;
-                    confidence += avgWaveConfidence * 0.3;
-                    factors += 0.3;
-                }
-                
-                // ثقة الأنماط
-                if (analysis.patterns.length > 0) {
-                    const avgPatternConfidence = analysis.patterns.reduce((sum, p) => sum + p.confidence, 0) / analysis.patterns.length;
-                    confidence += avgPatternConfidence * 0.25;
-                    factors += 0.25;
-                }
-                
-                // ثقة الاتجاه
-                confidence += analysis.trend.strength * 0.25;
-                factors += 0.25;
-                
-                // ثقة التوقعات
-                if (analysis.predictions.length > 0) {
-                    const avgPredictionConfidence = analysis.predictions.reduce((sum, p) => sum + p.probability, 0) / analysis.predictions.length;
-                    confidence += avgPredictionConfidence * 0.2;
-                    factors += 0.2;
-                }
-                
-                return Math.round(confidence / factors);
-            }
-        }
+return predictions;
+}
+
+// حساب مستوى الثقة الإجمالي
+calculateConfidence(analysis) {
+    let confidence = 0;
+    let factors = 0;
+    
+    // ثقة الموجات
+    if (analysis.waves.length > 0) {
+        const avgWaveConfidence = analysis.waves.reduce((sum, w) => sum + w.confidence, 0) / analysis.waves.length;
+        confidence += avgWaveConfidence * 0.3;
+        factors += 0.3;
+    }
+    
+    // ثقة الأنماط
+    if (analysis.patterns.length > 0) {
+        const avgPatternConfidence = analysis.patterns.reduce((sum, p) => sum + p.confidence, 0) / analysis.patterns.length;
+        confidence += avgPatternConfidence * 0.4;
+        factors += 0.4;
+    }
+    
+    // ثقة فيبوناتشي
+    if (analysis.fibonacci.levels.length > 0) {
+        const strongLevels = analysis.fibonacci.levels.filter(l => l.type === 'strong').length;
+        const fibConfidence = (strongLevels / analysis.fibonacci.levels.length) * 100;
+        confidence += fibConfidence * 0.3;
+        factors += 0.3;
+    }
+    
+    return factors > 0 ? confidence / factors : 50;
+}
+
 
         // API متقدم للعملات المشفرة
         class AdvancedCryptoAPI {
