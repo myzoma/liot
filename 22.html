@@ -1,0 +1,3464 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محلل موجات إليوت المتقدم</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .wave-impulse { color: #28a745; font-weight: bold; }
+        .wave-corrective { color: #dc3545; font-weight: bold; }
+        .fibonacci-level { background: linear-gradient(90deg, #ffd700, #ffed4e); }
+        .pattern-detected { border-left: 4px solid #007bff; }
+        .high-confidence { background-color: #d4edda; }
+        .medium-confidence { background-color: #fff3cd; }
+        .low-confidence { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-3">
+        <h1 class="text-center mb-4">🌊 محلل موجات إليوت المتقدم</h1>
+        
+        <!-- لوحة التحكم -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <div class="col-md-2">
+                                <label class="form-label">رمز العملة</label>
+                                <input type="text" id="symbolInput" class="form-control" placeholder="BTCUSDT" value="BTCUSDT">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">الفترة الزمنية</label>
+                                <select id="intervalSelect" class="form-select">
+                                    <option value="15m">15 دقيقة</option>
+                                    <option value="1h">ساعة واحدة</option>
+                                    <option value="4h" selected>4 ساعات</option>
+                                    <option value="1d">يوم واحد</option>
+                                    <option value="1w">أسبوع واحد</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">عدد الشموع</label>
+                                <select id="limitSelect" class="form-select">
+                                    <option value="200">200</option>
+                                    <option value="500" selected>500</option>
+                                    <option value="1000">1000</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">نوع التحليل</label>
+                                <select id="analysisType" class="form-select">
+                                    <option value="full" selected>تحليل شامل</option>
+                                    <option value="impulse">موجات دافعة فقط</option>
+                                    <option value="corrective">موجات تصحيحية فقط</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button id="analyzeBtn" class="btn btn-primary w-100">تحليل متقدم</button>
+                            </div>
+                            <div class="col-md-2">
+                                <button id="scanBtn" class="btn btn-success w-100">مسح السوق</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شريط التحميل -->
+        <div id="loadingBar" style="display: none;">
+            <div class="progress mb-3">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%">
+                    <span id="loadingText">جاري التحليل المتقدم...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- النتائج -->
+        <div class="row">
+            <!-- الرسم البياني -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 id="chartTitle">الرسم البياني مع ترقيم الموجات</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="priceChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- تفاصيل التحليل -->
+            <div class="col-md-4">
+                <div id="analysisDetails"></div>
+            </div>
+        </div>
+
+        <!-- تفاصيل الموجات -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>تفاصيل الموجات المكتشفة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="waveDetails"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- مستويات فيبوناتشي -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>مستويات فيبوناتشي</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="fibonacciLevels"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- الأنماط المكتشفة -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>الأنماط المكتشفة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="detectedPatterns"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- التوصيات المتقدمة -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>التوصيات والتوقعات</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="advancedRecommendations"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // محلل موجات إليوت المتقدم
+        class AdvancedElliottWaveAnalyzer {
+            constructor() {
+                this.fibonacciRatios = [0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.272, 1.618, 2.618];
+                this.wavePatterns = {
+                    impulse: ['1', '2', '3', '4', '5'],
+                    corrective: ['A', 'B', 'C'],
+                    complex: ['W', 'X', 'Y', 'Z']
+                };
+            }
+
+            // تحليل شامل للبيانات
+            analyzeData(data) {
+                if (!data || data.length < 100) {
+                    throw new Error('بيانات غير كافية للتحليل المتقدم');
+                }
+
+                const analysis = {
+                    waves: this.identifyWaves(data),
+                    patterns: this.detectPatterns(data),
+                    fibonacci: this.calculateFibonacci(data),
+                    trend: this.analyzeTrend(data),
+                    support_resistance: this.findSupportResistance(data),
+                    predictions: this.generatePredictions(data),
+                    confidence: 0
+                };
+
+                analysis.confidence = this.calculateConfidence(analysis);
+                return analysis;
+            }
+
+            // تحديد الموجات
+            identifyWaves(data) {
+                const waves = [];
+                const pivots = this.findPivotPoints(data);
+                
+                if (pivots.length < 5) return waves;
+
+                // تحديد الموجات الدافعة (1-2-3-4-5)
+                const impulseWaves = this.findImpulseWaves(pivots, data);
+                waves.push(...impulseWaves);
+
+                // تحديد الموجات التصحيحية (A-B-C)
+                const correctiveWaves = this.findCorrectiveWaves(pivots, data);
+                waves.push(...correctiveWaves);
+
+                return waves.sort((a, b) => a.startIndex - b.startIndex);
+            }
+
+            // العثور على نقاط المحورة
+            findPivotPoints(data, window = 10) {
+                const pivots = [];
+                
+                for (let i = window; i < data.length - window; i++) {
+                    const current = data[i];
+                    let isHigh = true;
+                    let isLow = true;
+
+                    // فحص النقاط المحيطة
+                    for (let j = i - window; j <= i + window; j++) {
+                        if (j === i) continue;
+                        
+                        if (data[j].high >= current.high) isHigh = false;
+                        if (data[j].low <= current.low) isLow = false;
+                    }
+
+                    if (isHigh) {
+                        pivots.push({
+                            index: i,
+                            type: 'high',
+                            price: current.high,
+                            timestamp: current.timestamp
+                        });
+                    }
+
+                    if (isLow) {
+                        pivots.push({
+                            index: i,
+                            type: 'low',
+                            price: current.low,
+                            timestamp: current.timestamp
+                        });
+                    }
+                }
+
+                return pivots.sort((a, b) => a.index - b.index);
+            }
+
+            // العثور على الموجات الدافعة
+            findImpulseWaves(pivots, data) {
+                const impulseWaves = [];
+                
+                for (let i = 0; i < pivots.length - 4; i++) {
+                    const sequence = pivots.slice(i, i + 5);
+                    
+                    if (this.isValidImpulseSequence(sequence)) {
+                        const waves = this.createImpulseWaves(sequence, data);
+                        impulseWaves.push(...waves);
+                    }
+                }
+
+                return impulseWaves;
+            }
+
+            // التحقق من صحة تسلسل الموجات الدافعة
+            isValidImpulseSequence(sequence) {
+                if (sequence.length !== 5) return false;
+
+                // قواعد موجات إليوت للموجات الدافعة
+                const rules = [
+                    // الموجة 2 لا تتجاوز بداية الموجة 1
+                    sequence[1].type !== sequence[0].type,
+                    // الموجة 3 ليست الأقصر
+                    true, // سيتم فحصها لاحقاً
+                    // الموجة 4 لا تتداخل مع الموجة 1
+                    true, // سيتم فحصها لاحقاً
+                    // الموجة 5 تتحرك في نفس اتجاه الموجات 1 و 3
+                    true
+                ];
+
+                return rules.every(rule => rule);
+            }
+
+            // إنشاء الموجات الدافعة
+            createImpulseWaves(sequence, data) {
+                const waves = [];
+                const waveLabels = ['1', '2', '3', '4', '5'];
+
+                for (let i = 0; i < sequence.length - 1; i++) {
+                    const start = sequence[i];
+                    const end = sequence[i + 1];
+                    
+                    waves.push({
+                        label: waveLabels[i],
+                        type: 'impulse',
+                        startIndex: start.index,
+                        endIndex: end.index,
+                        startPrice: start.price,
+                        endPrice: end.price,
+                        direction: end.price > start.price ? 'up' : 'down',
+                        length: Math.abs(end.price - start.price),
+                        duration: end.index - start.index,
+                        confidence: this.calculateWaveConfidence(start, end, data)
+                    });
+                }
+
+                return waves;
+            }
+
+            // العثور على الموجات التصحيحية
+            findCorrectiveWaves(pivots, data) {
+                const correctiveWaves = [];
+                
+                for (let i = 0; i < pivots.length - 2; i++) {
+                    const sequence = pivots.slice(i, i + 3);
+                    
+                    if (this.isValidCorrectiveSequence(sequence)) {
+                        const waves = this.createCorrectiveWaves(sequence, data);
+                        correctiveWaves.push(...waves);
+                    }
+                }
+
+                return correctiveWaves;
+            }
+
+            // التحقق من صحة تسلسل الموجات التصحيحية
+            isValidCorrectiveSequence(sequence) {
+                if (sequence.length !== 3) return false;
+                
+                // الموجة B يجب أن تكون في الاتجاه المعاكس للموجة A
+                return sequence[0].type !== sequence[1].type && 
+                       sequence[1].type !== sequence[2].type;
+            }
+
+            // إنشاء الموجات التصحيحية
+            createCorrectiveWaves(sequence, data) {
+                const waves = [];
+                const waveLabels = ['A', 'B', 'C'];
+
+                for (let i = 0; i < sequence.length - 1; i++) {
+                    const start = sequence[i];
+                    const end = sequence[i + 1];
+                    
+                    waves.push({
+                        label: waveLabels[i],
+                        type: 'corrective',
+                        startIndex: start.index,
+                        endIndex: end.index,
+                        startPrice: start.price,
+                        endPrice: end.price,
+                        direction: end.price > start.price ? 'up' : 'down',
+                                           length: Math.abs(end.price - start.price),
+                        duration: end.index - start.index,
+                        confidence: this.calculateWaveConfidence(start, end, data)
+                    });
+                }
+
+                return waves;
+            }
+
+            // حساب ثقة الموجة
+            calculateWaveConfidence(start, end, data) {
+                let confidence = 50;
+                
+                // زيادة الثقة بناءً على طول الموجة
+                const waveLength = Math.abs(end.price - start.price);
+                const avgPrice = (start.price + end.price) / 2;
+                const lengthRatio = (waveLength / avgPrice) * 100;
+                
+                if (lengthRatio > 5) confidence += 20;
+                else if (lengthRatio > 2) confidence += 10;
+                
+                // زيادة الثقة بناءً على الحجم
+                const volumeData = data.slice(start.index, end.index + 1);
+                const avgVolume = volumeData.reduce((sum, d) => sum + d.volume, 0) / volumeData.length;
+                const recentAvgVolume = data.slice(-20).reduce((sum, d) => sum + d.volume, 0) / 20;
+                
+                if (avgVolume > recentAvgVolume * 1.5) confidence += 15;
+                else if (avgVolume > recentAvgVolume) confidence += 5;
+                
+                return Math.min(confidence, 95);
+            }
+
+            // كشف الأنماط
+            detectPatterns(data) {
+                const patterns = [];
+                
+                // نمط الرأس والكتفين
+                const headShoulders = this.detectHeadAndShoulders(data);
+                if (headShoulders) patterns.push(headShoulders);
+                
+                // نمط المثلث
+                const triangle = this.detectTriangle(data);
+                if (triangle) patterns.push(triangle);
+                
+                // نمط القناة
+                const channel = this.detectChannel(data);
+                if (channel) patterns.push(channel);
+                
+                // نمط الوتد
+                const wedge = this.detectWedge(data);
+                if (wedge) patterns.push(wedge);
+                
+                return patterns;
+            }
+
+            // كشف نمط الرأس والكتفين
+            detectHeadAndShoulders(data) {
+                const pivots = this.findPivotPoints(data, 5);
+                const highs = pivots.filter(p => p.type === 'high').slice(-5);
+                
+                if (highs.length < 3) return null;
+                
+                const [left, head, right] = highs.slice(-3);
+                
+                if (head.price > left.price && head.price > right.price &&
+                    Math.abs(left.price - right.price) / left.price < 0.05) {
+                    
+                    return {
+                        type: 'Head and Shoulders',
+                        confidence: 75,
+                        direction: 'bearish',
+                        neckline: (left.price + right.price) / 2,
+                        target: (left.price + right.price) / 2 - (head.price - (left.price + right.price) / 2),
+                        description: 'نمط الرأس والكتفين - إشارة هبوطية'
+                    };
+                }
+                
+                return null;
+            }
+
+            // كشف نمط المثلث
+            detectTriangle(data) {
+                const recentData = data.slice(-50);
+                const highs = [];
+                const lows = [];
+                
+                for (let i = 5; i < recentData.length - 5; i++) {
+                    let isHigh = true;
+                    let isLow = true;
+                    
+                    for (let j = i - 5; j <= i + 5; j++) {
+                        if (j === i) continue;
+                        if (recentData[j].high >= recentData[i].high) isHigh = false;
+                        if (recentData[j].low <= recentData[i].low) isLow = false;
+                    }
+                    
+                    if (isHigh) highs.push({ index: i, price: recentData[i].high });
+                    if (isLow) lows.push({ index: i, price: recentData[i].low });
+                }
+                
+                if (highs.length >= 2 && lows.length >= 2) {
+                    const highTrend = this.calculateTrendLine(highs);
+                    const lowTrend = this.calculateTrendLine(lows);
+                    
+                    if (Math.abs(highTrend.slope) > 0.001 || Math.abs(lowTrend.slope) > 0.001) {
+                        return {
+                            type: 'Triangle',
+                            confidence: 65,
+                            direction: highTrend.slope < 0 && lowTrend.slope > 0 ? 'converging' : 'diverging',
+                            description: 'نمط المثلث - توقع كسر قريب'
+                        };
+                    }
+                }
+                
+                return null;
+            }
+
+            // كشف نمط القناة
+            detectChannel(data) {
+                const recentData = data.slice(-100);
+                const pivots = this.findPivotPoints(recentData, 3);
+                const highs = pivots.filter(p => p.type === 'high');
+                const lows = pivots.filter(p => p.type === 'low');
+                
+                if (highs.length >= 3 && lows.length >= 3) {
+                    const highTrend = this.calculateTrendLine(highs);
+                    const lowTrend = this.calculateTrendLine(lows);
+                    
+                    // فحص إذا كانت الخطوط متوازية
+                    if (Math.abs(highTrend.slope - lowTrend.slope) < 0.001) {
+                        return {
+                            type: 'Channel',
+                            confidence: 70,
+                            direction: highTrend.slope > 0 ? 'ascending' : 'descending',
+                            upperLine: highTrend,
+                            lowerLine: lowTrend,
+                            description: highTrend.slope > 0 ? 'قناة صاعدة' : 'قناة هابطة'
+                        };
+                    }
+                }
+                
+                return null;
+            }
+
+            // كشف نمط الوتد
+            detectWedge(data) {
+                const recentData = data.slice(-80);
+                const pivots = this.findPivotPoints(recentData, 3);
+                const highs = pivots.filter(p => p.type === 'high');
+                const lows = pivots.filter(p => p.type === 'low');
+                
+                if (highs.length >= 3 && lows.length >= 3) {
+                    const highTrend = this.calculateTrendLine(highs);
+                    const lowTrend = this.calculateTrendLine(lows);
+                    
+                    // الوتد الصاعد: خط المقاومة أقل انحداراً من خط الدعم
+                    if (highTrend.slope > 0 && lowTrend.slope > 0 && lowTrend.slope > highTrend.slope) {
+                        return {
+                            type: 'Rising Wedge',
+                            confidence: 68,
+                            direction: 'bearish',
+                            description: 'وتد صاعد - إشارة هبوطية محتملة'
+                        };
+                    }
+                    
+                    // الوتد الهابط
+                    if (highTrend.slope < 0 && lowTrend.slope < 0 && highTrend.slope > lowTrend.slope) {
+                        return {
+                            type: 'Falling Wedge',
+                            confidence: 68,
+                            direction: 'bullish',
+                            description: 'وتد هابط - إشارة صاعدة محتملة'
+                        };
+                    }
+                }
+                
+                return null;
+            }
+
+            // حساب خط الاتجاه
+            calculateTrendLine(points) {
+                if (points.length < 2) return null;
+                
+                const n = points.length;
+                const sumX = points.reduce((sum, p) => sum + p.index, 0);
+                const sumY = points.reduce((sum, p) => sum + p.price, 0);
+                const sumXY = points.reduce((sum, p) => sum + (p.index * p.price), 0);
+                const sumXX = points.reduce((sum, p) => sum + (p.index * p.index), 0);
+                
+                const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+                const intercept = (sumY - slope * sumX) / n;
+                
+                return { slope, intercept };
+            }
+
+            // حساب مستويات فيبوناتشي
+            calculateFibonacci(data) {
+                const recentData = data.slice(-100);
+                const high = Math.max(...recentData.map(d => d.high));
+                const low = Math.min(...recentData.map(d => d.low));
+                const range = high - low;
+                
+                const levels = this.fibonacciRatios.map(ratio => ({
+                    ratio: ratio,
+                    price: high - (range * ratio),
+                    level: `${(ratio * 100).toFixed(1)}%`,
+                    type: this.getFibonacciLevelType(ratio)
+                }));
+                
+                return {
+                    high,
+                    low,
+                    range,
+                    levels: levels.sort((a, b) => b.price - a.price)
+                };
+            }
+
+            // تحديد نوع مستوى فيبوناتشي
+            getFibonacciLevelType(ratio) {
+                if (ratio === 0.382 || ratio === 0.618) return 'strong';
+                if (ratio === 0.5 || ratio === 1.0) return 'medium';
+                return 'weak';
+            }
+
+            // تحليل الاتجاه
+            analyzeTrend(data) {
+                const shortTerm = this.calculateMovingAverage(data.slice(-20));
+                const mediumTerm = this.calculateMovingAverage(data.slice(-50));
+                const longTerm = this.calculateMovingAverage(data.slice(-100));
+                const currentPrice = data[data.length - 1].close;
+                
+                let trend = 'sideways';
+                let strength = 0;
+                
+                if (currentPrice > shortTerm && shortTerm > mediumTerm && mediumTerm > longTerm) {
+                    trend = 'strong_bullish';
+                    strength = 85;
+                } else if (currentPrice > shortTerm && shortTerm > mediumTerm) {
+                    trend = 'bullish';
+                    strength = 65;
+                } else if (currentPrice < shortTerm && shortTerm < mediumTerm && mediumTerm < longTerm) {
+                    trend = 'strong_bearish';
+                    strength = 85;
+                } else if (currentPrice < shortTerm && shortTerm < mediumTerm) {
+                    trend = 'bearish';
+                    strength = 65;
+                } else {
+                    strength = 30;
+                }
+                
+                return {
+                    direction: trend,
+                    strength,
+                    shortMA: shortTerm,
+                    mediumMA: mediumTerm,
+                    longMA: longTerm,
+                    currentPrice
+                };
+            }
+
+            // حساب المتوسط المتحرك
+            calculateMovingAverage(data) {
+                return data.reduce((sum, d) => sum + d.close, 0) / data.length;
+            }
+
+            // العثور على مستويات الدعم والمقاومة
+            findSupportResistance(data) {
+                const pivots = this.findPivotPoints(data, 5);
+                const resistanceLevels = pivots.filter(p => p.type === 'high')
+                    .map(p => p.price)
+                    .sort((a, b) => b - a)
+                    .slice(0, 5);
+                
+                const supportLevels = pivots.filter(p => p.type === 'low')
+                    .map(p => p.price)
+                    .sort((a, b) => a - b)
+                    .slice(0, 5);
+                
+                return {
+                    resistance: resistanceLevels,
+                    support: supportLevels,
+                    nearest: {
+                        resistance: resistanceLevels.find(r => r > data[data.length - 1].close),
+                        support: supportLevels.reverse().find(s => s < data[data.length - 1].close)
+                    }
+                };
+            }
+
+            // توليد التوقعات
+            generatePredictions(data) {
+                const currentPrice = data[data.length - 1].close;
+                const trend = this.analyzeTrend(data);
+                const fibonacci = this.calculateFibonacci(data);
+                
+                const predictions = [];
+                
+                // توقعات قصيرة المدى
+                if (trend.direction.includes('bullish')) {
+                    predictions.push({
+                        timeframe: 'short',
+                        direction: 'up',
+                        target: currentPrice * 1.05,
+                        probability: trend.strength,
+                        reasoning: 'الاتجاه الصاعد قوي'
+                    });
+                } else if (trend.direction.includes('bearish')) {
+                    predictions.push({
+                        timeframe: 'short',
+                        direction: 'down',
+                        target: currentPrice * 0.95,
+                        probability: trend.strength,
+                        reasoning: 'الاتجاه الهابط قوي'
+                    });
+                }
+                
+                // توقعات متوسطة المدى بناءً على فيبوناتشي
+                const nextFibLevel = fibonacci.levels.find(l => 
+                    Math.abs(l.price - currentPrice) > currentPrice * 0.02
+                );
+                
+                if (nextFibLevel) {
+                    predictions.push({
+                        timeframe: 'medium',
+                        direction: nextFibLevel.price > currentPrice ? 'up' : 'down',
+                        target: nextFibLevel.price,
+                        probability: nextFibLevel.type === 'strong' ? 70 : 50,
+                        reasoning: `مستوى فيبوناتشي ${nextFibLevel.level}`
+                    });
+                }
+                
+                return predictions;
+            }
+
+            // حساب مستوى الثقة الإجمالي
+            calculateConfidence(analysis) {
+                let confidence = 0;
+                let factors = 0;
+                
+                // ثقة الموجات
+                if (analysis.waves.length > 0) {
+                    const avgWaveConfidence = analysis.waves.reduce((sum, w)
+                    const avgWaveConfidence = analysis.waves.reduce((sum, w) => sum + w.confidence, 0) / analysis.waves.length;
+                    confidence += avgWaveConfidence * 0.3;
+                    factors += 0.3;
+                }
+                
+                // ثقة الأنماط
+                if (analysis.patterns.length > 0) {
+                    const avgPatternConfidence = analysis.patterns.reduce((sum, p) => sum + p.confidence, 0) / analysis.patterns.length;
+                    confidence += avgPatternConfidence * 0.25;
+                    factors += 0.25;
+                }
+                
+                // ثقة الاتجاه
+                confidence += analysis.trend.strength * 0.25;
+                factors += 0.25;
+                
+                // ثقة التوقعات
+                if (analysis.predictions.length > 0) {
+                    const avgPredictionConfidence = analysis.predictions.reduce((sum, p) => sum + p.probability, 0) / analysis.predictions.length;
+                    confidence += avgPredictionConfidence * 0.2;
+                    factors += 0.2;
+                }
+                
+                return Math.round(confidence / factors);
+            }
+        }
+
+        // API متقدم للعملات المشفرة
+        class AdvancedCryptoAPI {
+            constructor() {
+                this.baseURL = 'https://api.binance.com/api/v3';
+                this.requestCount = 0;
+                this.rateLimitDelay = 200;
+                this.popularSymbols = [
+                    'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT',
+                    'SOLUSDT', 'DOTUSDT', 'DOGEUSDT', 'AVAXUSDT', 'LUNAUSDT',
+                    'SHIBUSDT', 'MATICUSDT', 'LTCUSDT', 'LINKUSDT', 'UNIUSDT',
+                    'ATOMUSDT', 'ETCUSDT', 'XLMUSDT', 'BCHUSDT', 'FILUSDT',
+                    'TRXUSDT', 'EOSUSDT', 'AAVEUSDT', 'GRTUSDT', 'MKRUSDT',
+                    'COMPUSDT', 'YFIUSDT', 'SUSHIUSDT', 'SNXUSDT', 'CRVUSDT',
+                    'ALPHAUSDT', 'ZENUSDT', 'KSMUSDT', 'CHZUSDT', 'SANDUSDT',
+                    'MANAUSDT', 'ENJUSDT', 'GALAUSDT', 'AXSUSDT', 'FTMUSDT'
+                ];
+            }
+
+            async getKlines(symbol, interval, limit = 500) {
+                try {
+                    await this.rateLimitCheck();
+                    
+                    const url = `${this.baseURL}/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: فشل في جلب بيانات ${symbol}`);
+                    }
+                    
+                    const data = await response.json();
+                    this.requestCount++;
+                    
+                    return data.map(candle => ({
+                        timestamp: candle[0],
+                        open: parseFloat(candle[1]),
+                        high: parseFloat(candle[2]),
+                        low: parseFloat(candle[3]),
+                        close: parseFloat(candle[4]),
+                        volume: parseFloat(candle[5])
+                    }));
+                    
+                } catch (error) {
+                    console.error(`خطأ في جلب بيانات ${symbol}:`, error.message);
+                    throw error;
+                }
+            }
+
+            async getAllSymbols() {
+                try {
+                    const response = await fetch(`${this.baseURL}/exchangeInfo`);
+                    const data = await response.json();
+                    
+                    return data.symbols
+                        .filter(s => s.status === 'TRADING' && s.symbol.endsWith('USDT'))
+                        .map(s => s.symbol)
+                        .slice(0, 100); // أول 100 رمز
+                        
+                } catch (error) {
+                    console.warn('فشل في جلب قائمة الرموز، استخدام القائمة الافتراضية');
+                    return this.popularSymbols;
+                }
+            }
+
+            async rateLimitCheck() {
+                const now = Date.now();
+                if (this.lastRequestTime && (now - this.lastRequestTime) < this.rateLimitDelay) {
+                    await new Promise(resolve => 
+                        setTimeout(resolve, this.rateLimitDelay - (now - this.lastRequestTime))
+                    );
+                }
+                this.lastRequestTime = Date.now();
+            }
+
+            getUsageStats() {
+                return {
+                    totalRequests: this.requestCount,
+                    lastRequestTime: this.lastRequestTime,
+                    rateLimitDelay: this.rateLimitDelay
+                };
+            }
+        }
+
+        // التطبيق الرئيسي المتقدم
+        class AdvancedElliottWaveApp {
+            constructor() {
+                this.api = new AdvancedCryptoAPI();
+                this.analyzer = new AdvancedElliottWaveAnalyzer();
+                this.chart = null;
+                this.analysisHistory = [];
+            }
+
+            async analyzeSymbol(symbol, interval, limit) {
+                try {
+                    const data = await this.api.getKlines(symbol, interval, limit);
+                    const analysis = this.analyzer.analyzeData(data);
+                    
+                    const result = {
+                        success: true,
+                        symbol,
+                        interval,
+                        timestamp: Date.now(),
+                        data,
+                        analysis,
+                        summary: this.generateSummary(analysis)
+                    };
+                    
+                    this.analysisHistory.unshift(result);
+                    if (this.analysisHistory.length > 50) {
+                        this.analysisHistory = this.analysisHistory.slice(0, 50);
+                    }
+                    
+                    return result;
+                    
+                } catch (error) {
+                    return {
+                        success: false,
+                        symbol,
+                        interval,
+                        timestamp: Date.now(),
+                        error: error.message
+                    };
+                }
+            }
+
+            async scanMarket(symbols = null, interval = '4h') {
+                if (!symbols) {
+                    symbols = await this.api.getAllSymbols();
+                }
+                
+                const results = [];
+                const batchSize = 5;
+                
+                for (let i = 0; i < symbols.length; i += batchSize) {
+                    const batch = symbols.slice(i, i + batchSize);
+                    const batchPromises = batch.map(symbol => 
+                        this.analyzeSymbol(symbol, interval, 200)
+                    );
+                    
+                    const batchResults = await Promise.allSettled(batchPromises);
+                    
+                    batchResults.forEach((result, index) => {
+                        if (result.status === 'fulfilled') {
+                            results.push(result.value);
+                        } else {
+                            results.push({
+                                success: false,
+                                symbol: batch[index],
+                                error: result.reason.message
+                            });
+                        }
+                    });
+                    
+                    // تحديث شريط التقدم
+                    const progress = Math.round(((i + batchSize) / symbols.length) * 100);
+                    this.updateProgress(`مسح السوق: ${progress}%`);
+                    
+                    // تأخير بين المجموعات
+                    if (i + batchSize < symbols.length) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                return results.filter(r => r.success).sort((a, b) => b.analysis.confidence - a.analysis.confidence);
+            }
+
+            generateSummary(analysis) {
+                const summary = {
+                    trend: this.getTrendDescription(analysis.trend),
+                    waveCount: analysis.waves.length,
+                    patternCount: analysis.patterns.length,
+                    confidence: analysis.confidence,
+                    recommendation: this.getRecommendation(analysis),
+                    riskLevel: this.getRiskLevel(analysis)
+                };
+                
+                return summary;
+            }
+
+            getTrendDescription(trend) {
+                const descriptions = {
+                    'strong_bullish': 'اتجاه صاعد قوي جداً 🚀',
+                    'bullish': 'اتجاه صاعد 📈',
+                    'strong_bearish': 'اتجاه هابط قوي جداً 📉',
+                    'bearish': 'اتجاه هابط 📉',
+                    'sideways': 'حركة جانبية ↔️'
+                };
+                
+                return descriptions[trend.direction] || 'غير محدد';
+            }
+
+            getRecommendation(analysis) {
+                if (analysis.confidence < 50) return 'انتظار - ثقة منخفضة';
+                
+                if (analysis.trend.direction.includes('bullish')) {
+                    return analysis.confidence > 70 ? 'شراء قوي 🟢' : 'شراء 🟢';
+                } else if (analysis.trend.direction.includes('bearish')) {
+                    return analysis.confidence > 70 ? 'بيع قوي 🔴' : 'بيع 🔴';
+                }
+                
+                return 'انتظار ⏳';
+            }
+
+            getRiskLevel(analysis) {
+                if (analysis.confidence > 80) return 'منخفض';
+                if (analysis.confidence > 60) return 'متوسط';
+                return 'عالي';
+            }
+
+            updateProgress(text) {
+                const loadingText = document.getElementById('loadingText');
+                if (loadingText) {
+                    loadingText.textContent = text;
+                }
+            }
+
+            drawChart(result) {
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+                
+                const labels = result.data.map(d => new Date(d.timestamp).toLocaleDateString('ar-SA'));
+                const prices = result.data.map(d => d.close);
+                
+                // إضافة نقاط الموجات
+                const waveAnnotations = result.analysis.waves.map(wave => ({
+                    type: 'point',
+                    xValue: labels[wave.endIndex],
+                    yValue: wave.endPrice,
+                    backgroundColor: wave.type === 'impulse' ? 'rgba(40, 167, 69, 0.8)' : 'rgba(220, 53, 69, 0.8)',
+                    radius: 8,
+                    label: {
+                        content: wave.label,
+                        enabled: true,
+                        position: 'top'
+                    }
+                }));
+                
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'السعر',
+                            data: prices,
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.1,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `${result.symbol} - ${result.interval}`
+                            },
+                            annotation: {
+                                annotations: waveAnnotations
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // إنشاء التطبيق
+        const app = new AdvancedElliottWaveApp();
+        
+        // العناصر
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const scanBtn = document.getElementById('scanBtn');
+        const loadingBar = document.getElementById('loadingBar');
+        const analysisDetails = document.getElementById('analysisDetails');
+        const waveDetails = document.getElementById('waveDetails');
+        const fibonacciLevels = document.getElementById('fibonacciLevels');
+        const detectedPatterns = document.getElementById('detectedPatterns');
+        const advancedRecommendations = document.getElementById('advancedRecommendations');
+
+        // دالة التحليل المتقدم
+        async function analyzeAdvanced() {
+            const symbol = document.getElementById('symbolInput').value.toUpperCase();
+            const interval = document.getElementById('intervalSelect').value;
+            const limit = parseInt(document.getElementById('limitSelect').value);
+            
+            if (!symbol) {
+                alert('يرجى إدخال رمز العملة');
+                return;
+            }
+
+            showLoading('جاري التحليل المتقدم...');
+            
+            try {
+                const result = await app.analyzeSymbol(symbol, interval, limit);
+                
+                if (result.success) {
+                    displayAdvancedAnalysis(result);
+                    app.drawChart(result);
+                } else {
+                    showError(result.error);
+                }
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // دالة مسح السوق
+        async function scanMarket() {
+            showLoading('جاري مسح السوق...');
+            
+            try {
+                const results = await app.scanMarket(null, '4h');
+                displayMarketScan(results);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // عرض التحليل المتقدم
+        function displayAdvancedAnalysis(result) {
+            const analysis = result.analysis;
+            
+            // تفاصيل التحليل الرئيسية
+            analysisDetails.innerHTML = `
+                <div class="card mb-3 ${getConfidenceClass(analysis.confidence)}">
+                    <div class="card-header">
+                        <h6>ملخص التحليل</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>الاتجاه:</strong><br>
+                                <span class="badge bg-primary">${result.summary.trend}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>مستوى الثقة:</strong><br>
+                                <span class="badge bg-info">${analysis.confidence}%</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col
+                            <div class="col-6">
+                                <strong>عدد الموجات:</strong><br>
+                                <span class="badge bg-success">${result.summary.waveCount}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>الأنماط المكتشفة:</strong><br>
+                                <span class="badge bg-warning">${result.summary.patternCount}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <strong>التوصية:</strong><br>
+                            <span class="badge bg-${getRecommendationColor(result.summary.recommendation)} fs-6">
+                                ${result.summary.recommendation}
+                            </span>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <small class="text-muted">مستوى المخاطرة: ${result.summary.riskLevel}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6>تحليل الاتجاه</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <small>السعر الحالي:</small>
+                            <strong>${analysis.trend.currentPrice.toFixed(4)}</strong>
+                        </div>
+                        <div class="mb-2">
+                            <small>المتوسط قصير المدى:</small>
+                            <span class="${analysis.trend.currentPrice > analysis.trend.shortMA ? 'text-success' : 'text-danger'}">
+                                ${analysis.trend.shortMA.toFixed(4)}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <small>المتوسط متوسط المدى:</small>
+                            <span class="${analysis.trend.shortMA > analysis.trend.mediumMA ? 'text-success' : 'text-danger'}">
+                                ${analysis.trend.mediumMA.toFixed(4)}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <small>المتوسط طويل المدى:</small>
+                            <span class="${analysis.trend.mediumMA > analysis.trend.longMA ? 'text-success' : 'text-danger'}">
+                                ${analysis.trend.longMA.toFixed(4)}
+                            </span>
+                        </div>
+                        <div class="progress mt-3">
+                            <div class="progress-bar bg-${analysis.trend.strength > 70 ? 'success' : analysis.trend.strength > 40 ? 'warning' : 'danger'}" 
+                                 style="width: ${analysis.trend.strength}%">
+                                قوة الاتجاه: ${analysis.trend.strength}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h6>الدعم والمقاومة</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong class="text-danger">مقاومة:</strong><br>
+                                ${analysis.support_resistance.resistance.slice(0, 3).map(r => 
+                                    `<small class="d-block">${r.toFixed(4)}</small>`
+                                ).join('')}
+                            </div>
+                            <div class="col-6">
+                                <strong class="text-success">دعم:</strong><br>
+                                ${analysis.support_resistance.support.slice(0, 3).map(s => 
+                                    `<small class="d-block">${s.toFixed(4)}</small>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // تفاصيل الموجات
+            displayWaveDetails(analysis.waves);
+            
+            // مستويات فيبوناتشي
+            displayFibonacciLevels(analysis.fibonacci);
+            
+            // الأنماط المكتشفة
+            displayDetectedPatterns(analysis.patterns);
+            
+            // التوصيات المتقدمة
+            displayAdvancedRecommendations(analysis.predictions, result.summary);
+        }
+
+        // عرض تفاصيل الموجات
+        function displayWaveDetails(waves) {
+            if (waves.length === 0) {
+                waveDetails.innerHTML = '<div class="alert alert-info">لم يتم اكتشاف موجات واضحة</div>';
+                return;
+            }
+
+            const waveTable = waves.map(wave => `
+                <tr class="${wave.type === 'impulse' ? 'table-success' : 'table-warning'}">
+                    <td>
+                        <span class="badge bg-${wave.type === 'impulse' ? 'success' : 'danger'}">
+                            ${wave.label}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="wave-${wave.type}">${wave.type === 'impulse' ? 'دافعة' : 'تصحيحية'}</span>
+                    </td>
+                    <td>
+                        <i class="fas fa-arrow-${wave.direction === 'up' ? 'up text-success' : 'down text-danger'}"></i>
+                        ${wave.direction === 'up' ? 'صاعد' : 'هابط'}
+                    </td>
+                    <td>${wave.startPrice.toFixed(4)}</td>
+                    <td>${wave.endPrice.toFixed(4)}</td>
+                    <td>${wave.length.toFixed(4)}</td>
+                    <td>${wave.duration}</td>
+                    <td>
+                        <div class="progress" style="height: 15px;">
+                            <div class="progress-bar bg-${wave.confidence > 70 ? 'success' : wave.confidence > 50 ? 'warning' : 'danger'}" 
+                                 style="width: ${wave.confidence}%">
+                                ${wave.confidence.toFixed(0)}%
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            waveDetails.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>الموجة</th>
+                                <th>النوع</th>
+                                <th>الاتجاه</th>
+                                <th>سعر البداية</th>
+                                <th>سعر النهاية</th>
+                                <th>الطول</th>
+                                <th>المدة</th>
+                                <th>الثقة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${waveTable}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title text-success">موجات دافعة</h6>
+                                    <h4 class="text-success">${waves.filter(w => w.type === 'impulse').length}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title text-danger">موجات تصحيحية</h6>
+                                    <h4 class="text-danger">${waves.filter(w => w.type === 'corrective').length}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // عرض مستويات فيبوناتشي
+        function displayFibonacciLevels(fibonacci) {
+            const currentPrice = fibonacci.high - (fibonacci.range * 0.5); // تقدير السعر الحالي
+            
+            const fibTable = fibonacci.levels.map(level => {
+                const distance = Math.abs(level.price - currentPrice);
+                const isNear = distance < (fibonacci.range * 0.05);
+                
+                return `
+                    <tr class="${isNear ? 'table-warning' : ''} ${level.type === 'strong' ? 'fibonacci-level' : ''}">
+                        <td>
+                            <span class="badge bg-${level.type === 'strong' ? 'warning' : level.type === 'medium' ? 'info' : 'secondary'}">
+                                ${level.level}
+                            </span>
+                        </td>
+                        <td>${level.price.toFixed(4)}</td>
+                        <td>
+                            <span class="badge bg-${level.type === 'strong' ? 'danger' : level.type === 'medium' ? 'warning' : 'secondary'}">
+                                ${level.type === 'strong' ? 'قوي' : level.type === 'medium' ? 'متوسط' : 'ضعيف'}
+                            </span>
+                        </td>
+                        <td>
+                            ${isNear ? '<i class="fas fa-bullseye text-warning"></i> قريب' : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            fibonacciLevels.innerHTML = `
+                <div class="mb-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <small>أعلى سعر</small>
+                                    <h6 class="text-success">${fibonacci.high.toFixed(4)}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <small>المدى</small>
+                                    <h6 class="text-info">${fibonacci.range.toFixed(4)}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="card border-danger">
+                                <div class="card-body">
+                                    <small>أقل سعر</small>
+                                    <h6 class="text-danger">${fibonacci.low.toFixed(4)}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>المستوى</th>
+                                <th>السعر</th>
+                                <th>القوة</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${fibTable}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // عرض الأنماط المكتشفة
+        function displayDetectedPatterns(patterns) {
+            if (patterns.length === 0) {
+                detectedPatterns.innerHTML = '<div class="alert alert-info">لم يتم اكتشاف أنماط واضحة</div>';
+                return;
+            }
+
+            const patternCards = patterns.map(pattern => `
+                <div class="card mb-3 pattern-detected">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title">
+                                    <i class="fas fa-chart-line"></i>
+                                    ${pattern.type}
+                                </h6>
+                                <p class="card-text">${pattern.description}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-${pattern.confidence > 70 ? 'success' : pattern.confidence > 50 ? 'warning' : 'danger'} fs-6">
+                                    ${pattern.confidence}%
+                                </span>
+                                <br>
+                                <small class="text-muted">${pattern.direction}</small>
+                            </div>
+                        </div>
+                        
+                        ${pattern.target ? `
+                            <div class="mt-2">
+                                <small><strong>الهدف المتوقع:</strong> ${pattern.target.toFixed(4)}</small>
+                            </div>
+                        ` : ''}
+                        
+                        ${pattern.neckline ? `
+                            <div class="mt-1">
+                                <small><strong>خط العنق:</strong> ${pattern.neckline.toFixed(4)}</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            detectedPatterns.innerHTML = patternCards;
+        }
+
+        // عرض التوصيات المتقدمة
+        function displayAdvancedRecommendations(predictions, summary) {
+            const recommendationCards = predictions.map(pred => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title">
+                                    <i class="fas fa-${pred.direction === 'up' ? 'arrow-up text-success' : 'arrow-down text-danger'}"></i>
+                                    توقع ${pred.timeframe === 'short' ? 'قصير المدى' : 'متوسط المدى'}
+                                </h6>
+                                <p class="card-text">${pred.reasoning}</p>
+                                <div class="mt-2">
+                                    <strong>الهدف:</strong> 
+                                    <span class="badge bg-${pred.direction === 'up' ? 'success' : 'danger'}">
+                                        ${pred.target.toFixed(4)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="progress" style="width: 80px; height: 20px;">
+                                    <div class="progress-bar bg-${pred.probability > 70 ? 'success' : pred.probability > 50 ? 'warning' : 'danger'}" 
+                                         style="width: ${pred.probability}%">
+                                        ${pred.probability}
+                                        ${pred.probability}%
+                                    </div>
+                                </div>
+                                <small class="text-muted">احتمالية</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            const riskManagement = `
+                <div class="card border-warning mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-shield-alt"></i>
+                            إدارة المخاطر
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>مستوى المخاطرة:</strong>
+                                <span class="badge bg-${summary.riskLevel === 'منخفض' ? 'success' : summary.riskLevel === 'متوسط' ? 'warning' : 'danger'}">
+                                    ${summary.riskLevel}
+                                </span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>حجم المركز المقترح:</strong>
+                                <span class="badge bg-info">
+                                    ${summary.riskLevel === 'منخفض' ? '3-5%' : summary.riskLevel === 'متوسط' ? '1-3%' : '0.5-1%'}
+                                </span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    ${getRiskAdvice(summary.riskLevel)}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const tradingPlan = `
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line"></i>
+                            خطة التداول
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-success">نقطة الدخول</h6>
+                                    <span class="badge bg-success fs-6">
+                                        ${predictions.length > 0 ? 'السعر الحالي' : 'انتظار'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-warning">وقف الخسارة</h6>
+                                    <span class="badge bg-warning fs-6">
+                                        ${summary.riskLevel === 'منخفض' ? '2-3%' : summary.riskLevel === 'متوسط' ? '1-2%' : '0.5-1%'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-info">جني الأرباح</h6>
+                                    <span class="badge bg-info fs-6">
+                                        ${predictions.length > 0 ? 'حسب الهدف' : 'غير محدد'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            advancedRecommendations.innerHTML = `
+                ${riskManagement}
+                ${predictions.length > 0 ? recommendationCards : '<div class="alert alert-info">لا توجد توقعات واضحة حالياً</div>'}
+                ${tradingPlan}
+            `;
+        }
+
+        // عرض نتائج مسح السوق
+        function displayMarketScan(results) {
+            const topOpportunities = results.slice(0, 10);
+            
+            const scanTable = topOpportunities.map((result, index) => `
+                <tr class="cursor-pointer" onclick="loadSymbolAnalysis('${result.symbol}')">
+                    <td>${index + 1}</td>
+                    <td>
+                        <strong>${result.symbol}</strong>
+                        <br>
+                        <small class="text-muted">${result.summary.trend}</small>
+                    </td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-${result.analysis.confidence > 70 ? 'success' : result.analysis.confidence > 50 ? 'warning' : 'danger'}" 
+                                 style="width: ${result.analysis.confidence}%">
+                                ${result.analysis.confidence}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-${getRecommendationColor(result.summary.recommendation)}">
+                            ${result.summary.recommendation}
+                        </span>
+                    </td>
+                    <td>${result.summary.waveCount}</td>
+                    <td>${result.summary.patternCount}</td>
+                    <td>
+                        <span class="badge bg-${result.summary.riskLevel === 'منخفض' ? 'success' : result.summary.riskLevel === 'متوسط' ? 'warning' : 'danger'}">
+                            ${result.summary.riskLevel}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+            // إنشاء نافذة منبثقة لعرض النتائج
+            const modalHTML = `
+                <div class="modal fade" id="marketScanModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-search"></i>
+                                    نتائج مسح السوق - أفضل ${topOpportunities.length} فرص
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>#</th>
+                                                <th>الرمز</th>
+                                                <th>مستوى الثقة</th>
+                                                <th>التوصية</th>
+                                                <th>الموجات</th>
+                                                <th>الأنماط</th>
+                                                <th>المخاطرة</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${scanTable}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="card border-success">
+                                                <div class="card-body text-center">
+                                                    <h6 class="text-success">فرص عالية الثقة</h6>
+                                                    <h4 class="text-success">${results.filter(r => r.analysis.confidence > 70).length}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card border-warning">
+                                                <div class="card-body text-center">
+                                                    <h6 class="text-warning">فرص متوسطة</h6>
+                                                    <h4 class="text-warning">${results.filter(r => r.analysis.confidence > 50 && r.analysis.confidence <= 70).length}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card border-info">
+                                                <div class="card-body text-center">
+                                                    <h6 class="text-info">إجمالي الموجات</h6>
+                                                    <h4 class="text-info">${results.reduce((sum, r) => sum + r.summary.waveCount, 0)}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="card border-primary">
+                                                <div class="card-body text-center">
+                                                    <h6 class="text-primary">إجمالي الأنماط</h6>
+                                                    <h4 class="text-primary">${results.reduce((sum, r) => sum + r.summary.patternCount, 0)}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                                <button type="button" class="btn btn-primary" onclick="exportScanResults()">تصدير النتائج</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // إضافة النافذة المنبثقة إلى الصفحة
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // عرض النافذة المنبثقة
+            const modal = new bootstrap.Modal(document.getElementById('marketScanModal'));
+            modal.show();
+            
+            // إزالة النافذة عند الإغلاق
+            document.getElementById('marketScanModal').addEventListener('hidden.bs.modal', function () {
+                this.remove();
+            });
+        }
+
+        // تحميل تحليل رمز معين من نتائج المسح
+        async function loadSymbolAnalysis(symbol) {
+            document.getElementById('symbolInput').value = symbol;
+            const modal = bootstrap.Modal.getInstance(document.getElementById('marketScanModal'));
+            modal.hide();
+            
+            setTimeout(() => {
+                analyzeAdvanced();
+            }, 500);
+        }
+
+        // تصدير نتائج المسح
+        function exportScanResults() {
+            const results = app.analysisHistory.filter(r => r.success);
+            const csvContent = generateCSVReport(results);
+            downloadCSV(csvContent, `elliott-wave-scan-${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        // توليد تقرير CSV
+        function generateCSVReport(results) {
+            const headers = ['الرمز', 'الفترة', 'مستوى الثقة', 'الاتجاه', 'التوصية', 'عدد الموجات', 'عدد الأنماط', 'المخاطرة'];
+            const rows = results.map(r => [
+                r.symbol,
+                r.interval,
+                r.analysis.confidence,
+                r.summary.trend,
+                r.summary.recommendation,
+                r.summary.waveCount,
+                r.summary.patternCount,
+                r.summary.riskLevel
+            ]);
+            
+            return [headers, ...rows].map(row => row.join(',')).join('\n');
+        }
+
+        // تحميل ملف CSV
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // دوال مساعدة
+        function showLoading(text = 'جاري التحميل...') {
+            document.getElementById('loadingText').textContent = text;
+            loadingBar.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingBar.style.display = 'none';
+        }
+
+        function showError(message) {
+            analysisDetails.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>خطأ:</strong> ${message}
+                </div>
+            `;
+        }
+
+        function getConfidenceClass(confidence) {
+            if (confidence > 70) return 'high-confidence';
+            if (confidence > 50) return 'medium-confidence';
+            return 'low-confidence';
+        }
+
+        function getRecommendationColor(recommendation) {
+            if (recommendation.includes('شراء')) return 'success';
+            if (recommendation.includes('بيع')) return 'danger';
+            if (recommendation.includes('انتظار')) return 'warning';
+            return 'secondary';
+        }
+
+        function getRiskAdvice(riskLevel) {
+            const advice = {
+                'منخفض': 'يمكن زيادة حجم المركز مع مراقبة دقيقة للسوق',
+                'متوسط': 'استخدم حجم مركز معتدل مع وضع وقف خسارة محكم',
+                'عالي': 'تداول بحذر شديد مع حجم مركز صغير ووقف خسارة قريب'
+            };
+            return advice[riskLevel] || 'تداول بحذر';
+        }
+
+        // ربط الأحداث
+        analyzeBtn.addEventListener('click', analyzeAdvanced);
+        scanBtn.addEventListener('click', scanMarket);
+
+        // تحليل تلقائي عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            // تحليل BTC افتراضياً
+            setTimeout(() => {
+                analyzeAdvanced();
+            }, 1000);
+        });
+
+        // إضافة اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                analyzeAdvanced();
+            }
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                scanMarket();
+            }
+        });
+
+                // حفظ الإعدادات في التخزين المحلي
+        function saveSettings() {
+            const settings = {
+                defaultSymbol: document.getElementById('symbolInput').value,
+                defaultInterval: document.getElementById('intervalSelect').value,
+                defaultLimit: document.getElementById('limitSelect').value,
+                theme: document.body.classList.contains('dark-theme') ? 'dark' : 'light'
+            };
+            localStorage.setItem('elliottWaveSettings', JSON.stringify(settings));
+        }
+
+        // تحميل الإعدادات من التخزين المحلي
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('elliottWaveSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                document.getElementById('symbolInput').value = settings.defaultSymbol || 'BTCUSDT';
+                document.getElementById('intervalSelect').value = settings.defaultInterval || '4h';
+                document.getElementById('limitSelect').value = settings.defaultLimit || '200';
+                
+                if (settings.theme === 'dark') {
+                    toggleTheme();
+                }
+            }
+        }
+
+        // تبديل المظهر
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            
+            // تحديث أيقونة المظهر
+            const themeIcon = document.querySelector('#themeToggle i');
+            if (themeIcon) {
+                themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+            
+            // إعادة رسم الرسم البياني بالألوان الجديدة
+            if (app.chart) {
+                updateChartTheme(isDark);
+            }
+            
+            saveSettings();
+        }
+
+        // تحديث مظهر الرسم البياني
+        function updateChartTheme(isDark) {
+            const chart = app.chart;
+            if (!chart) return;
+            
+            const backgroundColor = isDark ? '#2d3748' : '#ffffff';
+            const textColor = isDark ? '#e2e8f0' : '#2d3748';
+            const gridColor = isDark ? '#4a5568' : '#e2e8f0';
+            
+            chart.options.plugins.legend.labels.color = textColor;
+            chart.options.scales.x.ticks.color = textColor;
+            chart.options.scales.y.ticks.color = textColor;
+            chart.options.scales.x.grid.color = gridColor;
+            chart.options.scales.y.grid.color = gridColor;
+            
+            chart.update();
+        }
+
+        // إضافة تنبيهات مخصصة
+        class AlertManager {
+            constructor() {
+                this.alerts = JSON.parse(localStorage.getItem('elliottWaveAlerts') || '[]');
+                this.checkInterval = null;
+            }
+
+            addAlert(symbol, condition, value, message) {
+                const alert = {
+                    id: Date.now(),
+                    symbol,
+                    condition, // 'above', 'below', 'pattern', 'wave'
+                    value,
+                    message,
+                    active: true,
+                    created: new Date().toISOString()
+                };
+                
+                this.alerts.push(alert);
+                this.saveAlerts();
+                this.startChecking();
+                
+                return alert.id;
+            }
+
+            removeAlert(id) {
+                this.alerts = this.alerts.filter(alert => alert.id !== id);
+                this.saveAlerts();
+                
+                if (this.alerts.length === 0) {
+                    this.stopChecking();
+                }
+            }
+
+            async checkAlerts() {
+                for (const alert of this.alerts.filter(a => a.active)) {
+                    try {
+                        const result = await app.analyzeSymbol(alert.symbol, '1h', 50);
+                        if (result.success) {
+                            const triggered = this.evaluateCondition(alert, result);
+                            if (triggered) {
+                                this.triggerAlert(alert);
+                                alert.active = false;
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`خطأ في فحص التنبيه ${alert.id}:`, error);
+                    }
+                }
+                
+                this.saveAlerts();
+            }
+
+            evaluateCondition(alert, result) {
+                const currentPrice = result.data[result.data.length - 1].close;
+                
+                switch (alert.condition) {
+                    case 'above':
+                        return currentPrice > alert.value;
+                    case 'below':
+                        return currentPrice < alert.value;
+                    case 'pattern':
+                        return result.analysis.patterns.some(p => p.type === alert.value);
+                    case 'wave':
+                        return result.analysis.waves.some(w => w.label === alert.value);
+                    case 'confidence':
+                        return result.analysis.confidence > alert.value;
+                    default:
+                        return false;
+                }
+            }
+
+            triggerAlert(alert) {
+                // إشعار المتصفح
+                if (Notification.permission === 'granted') {
+                    new Notification('تنبيه Elliott Wave', {
+                        body: alert.message,
+                        icon: '/favicon.ico'
+                    });
+                }
+                
+                // إشعار في الصفحة
+                this.showPageNotification(alert);
+                
+                // صوت التنبيه
+                this.playAlertSound();
+            }
+
+            showPageNotification(alert) {
+                const notification = document.createElement('div');
+                notification.className = 'alert alert-warning alert-dismissible fade show position-fixed';
+                notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+                notification.innerHTML = `
+                    <strong>${alert.symbol}</strong><br>
+                    ${alert.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // إزالة التنبيه بعد 10 ثوان
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 10000);
+            }
+
+            playAlertSound() {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+                audio.play().catch(() => {}); // تجاهل الأخطاء
+            }
+
+            startChecking() {
+                if (this.checkInterval) return;
+                
+                this.checkInterval = setInterval(() => {
+                    this.checkAlerts();
+                }, 60000); // فحص كل دقيقة
+            }
+
+            stopChecking() {
+                if (this.checkInterval) {
+                    clearInterval(this.checkInterval);
+                    this.checkInterval = null;
+                }
+            }
+
+            saveAlerts() {
+                localStorage.setItem('elliottWaveAlerts', JSON.stringify(this.alerts));
+            }
+
+            getActiveAlerts() {
+                return this.alerts.filter(a => a.active);
+            }
+        }
+
+        // إنشاء مدير التنبيهات
+        const alertManager = new AlertManager();
+
+        // واجهة إدارة التنبيهات
+        function showAlertManager() {
+            const modalHTML = `
+                <div class="modal fade" id="alertModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-bell"></i>
+                                    إدارة التنبيهات
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <button class="btn btn-primary" onclick="showAddAlertForm()">
+                                            <i class="fas fa-plus"></i>
+                                            إضافة تنبيه جديد
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <span class="badge bg-info">
+                                            التنبيهات النشطة: ${alertManager.getActiveAlerts().length}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div id="alertsList">
+                                    ${renderAlertsList()}
+                                </div>
+                                
+                                <div id="addAlertForm" style="display: none;">
+                                    ${renderAddAlertForm()}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            const modal = new bootstrap.Modal(document.getElementById('alertModal'));
+            modal.show();
+            
+            document.getElementById('alertModal').addEventListener('hidden.bs.modal', function () {
+                this.remove();
+            });
+        }
+
+        function renderAlertsList() {
+            const alerts = alertManager.alerts;
+            
+            if (alerts.length === 0) {
+                return '<div class="alert alert-info">لا توجد تنبيهات محفوظة</div>';
+            }
+            
+            return alerts.map(alert => `
+                <div class="card mb-2 ${alert.active ? '' : 'opacity-50'}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="card-title">
+                                    ${alert.symbol}
+                                    <span class="badge bg-${alert.active ? 'success' : 'secondary'}">
+                                        ${alert.active ? 'نشط' : 'مكتمل'}
+                                    </span>
+                                </h6>
+                                <p class="card-text">${alert.message}</p>
+                                <small class="text-muted">
+                                    ${getConditionText(alert)} | 
+                                    تم الإنشاء: ${new Date(alert.created).toLocaleDateString('ar-SA')}
+                                </small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-danger" onclick="removeAlert(${alert.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAddAlertForm() {
+            return `
+                <div class="card">
+                    <div class="card-header">
+                        <h6>إضافة تنبيه جديد</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="alertForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">رمز العملة</label>
+                                    <input type="text" class="form-control" id="alertSymbol" placeholder="BTCUSDT" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">نوع التنبيه</label>
+                                    <select class="form-select" id="alertCondition" onchange="updateAlertValueField()" required>
+                                        <option value="above">السعر أعلى من</option>
+                                        <option value="below">السعر أقل من</option>
+                                        <option value="confidence">مستوى الثقة أعلى من</option>
+                                        <option value="pattern">اكتشاف نمط</option>
+                                        <option value="wave">اكتشاف موجة</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">القيمة</label>
+                                <input type="number" class="form-control" id="alertValue" step="0.0001" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">رسالة التنبيه</label>
+                                <textarea class="form-control" id="alertMessage" rows="2" placeholder="وصف التنبيه..." required></textarea>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i>
+                                    حفظ التنبيه
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="hideAddAlertForm()">
+                                    إلغاء
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showAddAlertForm() {
+            document.getElementById('addAlertForm').style.display = 'block';
+            document.getElementById('alertSymbol').value = document.getElementById('symbolInput').value;
+        }
+
+        function hideAddAlertForm() {
+            document.getElementById('addAlertForm').style.display = 'none';
+        }
+
+        function updateAlertValueField() {
+            const condition = document.getElementById('alertCondition').value;
+            const valueField = document.getElementById('alertValue');
+            
+            switch (condition) {
+                case 'confidence':
+                    valueField.placeholder = '70';
+                    valueField.max = '100';
+                    valueField.min = '0';
+                    break;
+                case 'above':
+                case 'below':
+                    valueField.placeholder = '50000';
+                    valueField.removeAttribute('max');
+                    valueField.min = '0';
+                    break;
+                default:
+                    valueField.placeholder = '';
+            }
+        }
+
+              function getConditionText(alert) {
+            const conditions = {
+                'above': `السعر > ${alert.value}`,
+                'below': `السعر < ${alert.value}`,
+                'confidence': `الثقة > ${alert.value}%`,
+                'pattern': `نمط: ${alert.value}`,
+                'wave': `موجة: ${alert.value}`
+            };
+            return conditions[alert.condition] || 'غير محدد';
+        }
+
+        function removeAlert(id) {
+            alertManager.removeAlert(id);
+            // تحديث قائمة التنبيهات
+            document.getElementById('alertsList').innerHTML = renderAlertsList();
+        }
+
+        // معالج نموذج إضافة التنبيه
+        document.addEventListener('submit', function(e) {
+            if (e.target.id === 'alertForm') {
+                e.preventDefault();
+                
+                const symbol = document.getElementById('alertSymbol').value.toUpperCase();
+                const condition = document.getElementById('alertCondition').value;
+                const value = parseFloat(document.getElementById('alertValue').value);
+                const message = document.getElementById('alertMessage').value;
+                
+                alertManager.addAlert(symbol, condition, value, message);
+                
+                // إخفاء النموذج وتحديث القائمة
+                hideAddAlertForm();
+                document.getElementById('alertsList').innerHTML = renderAlertsList();
+                
+                // إظهار رسالة نجاح
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show';
+                successAlert.innerHTML = `
+                    تم إضافة التنبيه بنجاح!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('#alertModal .modal-body').prepend(successAlert);
+                
+                setTimeout(() => successAlert.remove(), 3000);
+            }
+        });
+
+        // طلب إذن الإشعارات
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification('تم تفعيل الإشعارات', {
+                            body: 'ستتلقى إشعارات عند تحقق شروط التنبيهات',
+                            icon: '/favicon.ico'
+                        });
+                    }
+                });
+            }
+        }
+
+        // إضافة أدوات التحليل الفني المتقدمة
+        class TechnicalIndicators {
+            static RSI(prices, period = 14) {
+                const gains = [];
+                const losses = [];
+                
+                for (let i = 1; i < prices.length; i++) {
+                    const change = prices[i] - prices[i - 1];
+                    gains.push(change > 0 ? change : 0);
+                    losses.push(change < 0 ? Math.abs(change) : 0);
+                }
+                
+                const rsi = [];
+                for (let i = period - 1; i < gains.length; i++) {
+                    const avgGain = gains.slice(i - period + 1, i + 1).reduce((a, b) => a + b) / period;
+                    const avgLoss = losses.slice(i - period + 1, i + 1).reduce((a, b) => a + b) / period;
+                    
+                    if (avgLoss === 0) {
+                        rsi.push(100);
+                    } else {
+                        const rs = avgGain / avgLoss;
+                        rsi.push(100 - (100 / (1 + rs)));
+                    }
+                }
+                
+                return rsi;
+            }
+
+            static MACD(prices, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+                const emaFast = this.EMA(prices, fastPeriod);
+                const emaSlow = this.EMA(prices, slowPeriod);
+                
+                const macdLine = [];
+                for (let i = 0; i < Math.min(emaFast.length, emaSlow.length); i++) {
+                    macdLine.push(emaFast[i] - emaSlow[i]);
+                }
+                
+                const signalLine = this.EMA(macdLine, signalPeriod);
+                const histogram = [];
+                
+                for (let i = 0; i < Math.min(macdLine.length, signalLine.length); i++) {
+                    histogram.push(macdLine[i] - signalLine[i]);
+                }
+                
+                return {
+                    macd: macdLine,
+                    signal: signalLine,
+                    histogram: histogram
+                };
+            }
+
+            static EMA(prices, period) {
+                const multiplier = 2 / (period + 1);
+                const ema = [prices[0]];
+                
+                for (let i = 1; i < prices.length; i++) {
+                    ema.push((prices[i] * multiplier) + (ema[i - 1] * (1 - multiplier)));
+                }
+                
+                return ema;
+            }
+
+            static BollingerBands(prices, period = 20, stdDev = 2) {
+                const sma = this.SMA(prices, period);
+                const bands = { upper: [], middle: [], lower: [] };
+                
+                for (let i = period - 1; i < prices.length; i++) {
+                    const slice = prices.slice(i - period + 1, i + 1);
+                    const mean = sma[i - period + 1];
+                    const variance = slice.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / period;
+                    const standardDeviation = Math.sqrt(variance);
+                    
+                    bands.middle.push(mean);
+                    bands.upper.push(mean + (standardDeviation * stdDev));
+                    bands.lower.push(mean - (standardDeviation * stdDev));
+                }
+                
+                return bands;
+            }
+
+            static SMA(prices, period) {
+                const sma = [];
+                for (let i = period - 1; i < prices.length; i++) {
+                    const sum = prices.slice(i - period + 1, i + 1).reduce((a, b) => a + b);
+                    sma.push(sum / period);
+                }
+                return sma;
+            }
+
+            static StochasticOscillator(highs, lows, closes, kPeriod = 14, dPeriod = 3) {
+                const k = [];
+                
+                for (let i = kPeriod - 1; i < closes.length; i++) {
+                    const highestHigh = Math.max(...highs.slice(i - kPeriod + 1, i + 1));
+                    const lowestLow = Math.min(...lows.slice(i - kPeriod + 1, i + 1));
+                    const currentClose = closes[i];
+                    
+                    k.push(((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100);
+                }
+                
+                const d = this.SMA(k, dPeriod);
+                
+                return { k, d };
+            }
+        }
+
+        // تحسين محلل Elliott Wave بالمؤشرات الفنية
+        class EnhancedElliottWaveAnalyzer extends AdvancedElliottWaveAnalyzer {
+            analyzeData(data) {
+                const baseAnalysis = super.analyzeData(data);
+                
+                // إضافة المؤشرات الفنية
+                const prices = data.map(d => d.close);
+                const highs = data.map(d => d.high);
+                const lows = data.map(d => d.low);
+                
+                const indicators = {
+                    rsi: TechnicalIndicators.RSI(prices),
+                    macd: TechnicalIndicators.MACD(prices),
+                    bollinger: TechnicalIndicators.BollingerBands(prices),
+                    stochastic: TechnicalIndicators.StochasticOscillator(highs, lows, prices)
+                };
+                
+                // تحليل الإشارات
+                const signals = this.analyzeSignals(indicators, baseAnalysis);
+                
+                return {
+                    ...baseAnalysis,
+                    indicators,
+                    signals,
+                    enhancedConfidence: this.calculateEnhancedConfidence(baseAnalysis, signals)
+                };
+            }
+
+            analyzeSignals(indicators, baseAnalysis) {
+                const signals = [];
+                
+                // إشارات RSI
+                const currentRSI = indicators.rsi[indicators.rsi.length - 1];
+                if (currentRSI > 70) {
+                    signals.push({
+                        type: 'overbought',
+                        indicator: 'RSI',
+                        value: currentRSI,
+                        signal: 'بيع',
+                        strength: Math.min((currentRSI - 70) / 10, 1)
+                    });
+                } else if (currentRSI < 30) {
+                    signals.push({
+                        type: 'oversold',
+                        indicator: 'RSI',
+                        value: currentRSI,
+                        signal: 'شراء',
+                        strength: Math.min((30 - currentRSI) / 10, 1)
+                    });
+                }
+                
+                // إشارات MACD
+                const macd = indicators.macd;
+                const currentMACD = macd.macd[macd.macd.length - 1];
+                const currentSignal = macd.signal[macd.signal.length - 1];
+                const previousMACD = macd.macd[macd.macd.length - 2];
+                const previousSignal = macd.signal[macd.signal.length - 2];
+                
+                if (previousMACD <= previousSignal && currentMACD > currentSignal) {
+                    signals.push({
+                        type: 'bullish_crossover',
+                        indicator: 'MACD',
+                        signal: 'شراء',
+                        strength: Math.min(Math.abs(currentMACD - currentSignal) / Math.abs(currentMACD), 1)
+                    });
+                } else if (previousMACD >= previousSignal && currentMACD < currentSignal) {
+                    signals.push({
+                        type: 'bearish_crossover',
+                        indicator: 'MACD',
+                        signal: 'بيع',
+                        strength: Math.min(Math.abs(currentMACD - currentSignal) / Math.abs(currentMACD), 1)
+                    });
+                }
+                
+                // إشارات Bollinger Bands
+                const bollinger = indicators.bollinger;
+                const currentPrice = baseAnalysis.trend.currentPrice;
+                const upperBand = bollinger.upper[bollinger.upper.length - 1];
+                const lowerBand = bollinger.lower[bollinger.lower.length - 1];
+                
+                if (currentPrice > upperBand) {
+                    signals.push({
+                        type: 'price_above_upper_band',
+                        indicator: 'Bollinger Bands',
+                        signal: 'بيع محتمل',
+                        strength: Math.min((currentPrice - upperBand) / upperBand, 1)
+                    });
+                } else if (currentPrice < lowerBand) {
+                    signals.push({
+                        type: 'price_below_lower_band',
+                        indicator: 'Bollinger Bands',
+                        signal: 'شراء محتمل',
+                        strength: Math.min((lowerBand - currentPrice) / lowerBand, 1)
+                    });
+                }
+                
+                return signals;
+            }
+
+            calculateEnhancedConfidence(baseAnalysis, signals) {
+                let enhancedConfidence = baseAnalysis.confidence;
+                
+                // تعديل الثقة بناءً على الإشارات
+                const bullishSignals = signals.filter(s => s.signal.includes('شراء')).length;
+                const bearishSignals = signals.filter(s => s.signal.includes('بيع')).length;
+                
+                if (baseAnalysis.trend.direction.includes('bullish') && bullishSignals > bearishSignals) {
+                    enhancedConfidence += 10;
+                } else if (baseAnalysis.trend.direction.includes('bearish') && bearishSignals > bullishSignals) {
+                    enhancedConfidence += 10;
+                } else if (bullishSignals > 0 && bearishSignals > 0) {
+                    enhancedConfidence -= 5; // إشارات متضاربة
+                }
+                
+                return Math.min(Math.max(enhancedConfidence, 0), 100);
+            }
+        }
+
+        // تحديث التطبيق لاستخدام المحلل المحسن
+        app.analyzer = new EnhancedElliottWaveAnalyzer();
+
+        // إضافة واجهة عرض المؤشرات الفنية
+        function displayTechnicalIndicators(indicators, signals) {
+            const indicatorsHTML = `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-bar"></i> المؤشرات الفنية</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="indicator-item">
+                                    <strong>RSI (14):</strong>
+                                    <span class="badge bg-${getRSIColor(indicators.rsi[indicators.rsi.length - 1])}">
+                                        ${indicators.rsi[indicators.rsi.length - 1].toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="indicator-item">
+                                    <strong>MACD:</strong>
+                                    <span class="badge bg-${indicators.macd.histogram[indicators.macd.histogram.length - 1] > 0 ? 'success' : 'danger'}">
+                                        ${indicators.macd.macd[indicators.macd.macd.length - 1].toFixed(4)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-2">
+                            <div class="col-md-12">
+                                <strong>Bollinger Bands:</strong>
+                                <div class="d-flex gap-2">
+                                    <small>العلوي: ${indicators.bollinger.upper[indicators.bollinger.upper.length - 1].toFixed(4)}</small>
+                                    <small>الوسط: ${indicators.bollinger.middle[indicators.bollinger.middle.length - 1].toFixed(4)}</small>
+                                    <small>السفلي: ${indicators.bollinger.lower[indicators.bollinger.lower.length - 1].toFixed(4)}</small>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <div class="indicator-item">
+                                    <strong>Stochastic %K:</strong>
+                                    <span class="badge bg-${getStochasticColor(indicators.stochastic.k[indicators.stochastic.k.length - 1])}">
+                                        ${indicators.stochastic.k[indicators.stochastic.k.length - 1].toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="indicator-item">
+                                    <strong>Stochastic %D:</strong>
+                                    <span class="badge bg-${getStochasticColor(indicators.stochastic.d[indicators.stochastic.d.length - 1])}">
+                                        ${indicators.stochastic.d[indicators.stochastic.d.length - 1].toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-signal"></i> الإشارات الفنية</h6>
+                    </div>
+                    <div class="card-body">
+                        ${signals.length > 0 ? renderSignals(signals) : '<div class="alert alert-info">لا توجد إشارات واضحة حالياً</div>'}
+                    </div>
+                </div>
+            `;
+            
+            return indicatorsHTML;
+        }
+
+        function renderSignals(signals) {
+            return signals.map(signal => `
+                <div class="alert alert-${getSignalAlertClass(signal.signal)} d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${signal.indicator}:</strong> ${signal.signal}
+                        ${signal.value ? `(${signal.value.toFixed(2)})` : ''}
+                    </div>
+                    <div>
+                        <div class="progress" style="width: 100px; height: 20px;">
+                            <div class="progress-bar bg-${getSignalProgressColor(signal.signal)}" 
+                                 style="width: ${(signal.strength * 100).toFixed(0)}%">
+                                ${(signal.strength * 100).toFixed(0)}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getRSIColor(rsi) {
+            if (rsi > 70) return 'danger';
+            if (rsi < 30) return 'success';
+            return 'secondary';
+        }
+
+        function getStochasticColor(value) {
+            if (value > 80) return 'danger';
+            if (value < 20) return 'success';
+            return 'secondary';
+        }
+
+        function getSignalAlertClass(signal) {
+            if (signal.includes('شراء')) return 'success';
+            if (signal.includes('بيع')) return 'danger';
+            return 'warning';
+        }
+
+        function getSignalProgressColor(signal) {
+            if (signal.includes('شراء')) return 'success';
+            if (signal.includes('بيع')) return 'danger';
+            return 'warning';
+        }
+
+        // تحديث دالة عرض التحليل لتشمل المؤشرات الفنية
+        function displayAnalysisResults(result) {
+            const { analysis, summary } = result;
+            
+            // عرض الملخص الأساسي
+            analysisDetails.innerHTML = `
+                <div class="card mb-3 ${getConfidenceClass(analysis.enhancedConfidence || analysis.confidence)}">
+                    <div class="card-header">
+                        <h5>ملخص التحليل</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <strong>مستوى الثقة:</strong><br>
+                                <div class="progress mt-2">
+                                    <div class="progress-bar bg-${analysis.enhancedConfidence > 70 ? 'success' : analysis.enhancedConfidence > 50 ? 'warning' : 'danger'}" 
+                                         style="width: ${analysis.enhancedConfidence || analysis.confidence}%">
+                                        ${(analysis.enhancedConfidence || analysis.confidence).toFixed(0)}%
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <strong>الاتجاه العام:</strong><br>
+                                <span class="badge bg-${analysis.trend.direction.includes('bullish') ? 'success' : 'danger'} fs-6">
+                                    ${analysis.trend.direction}
+                                </span>
+                            </div>
+                            <div class="col-4">
+                                <strong>قوة الاتجاه:</strong><br>
+                                <span class="badge bg-info fs-6">${analysis.trend.strength}%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <strong>عدد الموجات:</strong><br>
+                                <span class="badge bg-success">${summary.waveCount}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>الأنماط المكتشفة:</strong><br>
+                                <span class="badge bg-warning">${summary.patternCount}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <strong>التوصية:</strong><br>
+                            <span class="badge bg-${getRecommendationColor(summary.recommendation)} fs-6">
+                                ${summary.recommendation}
+                            </span>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <small class="text-muted">مستوى المخاطرة: ${summary.riskLevel}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                ${analysis.indicators ? displayTechnicalIndicators(analysis.indicators, analysis.signals) : ''}
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6>تحليل الاتجاه</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <small>السعر الحالي:</small>
+                            <strong>${analysis.trend.currentPrice.toFixed(4)}</strong>
+                        </div>
+                        <div class="mb-2">
+                            <small>المتوسط قصير المدى:</small>
+                            <span class="${analysis.trend.currentPrice > analysis.trend.shortMA ? 'text-success' : 'text-danger'}">
+                                ${analysis.trend.shortMA.toFixed(4)}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <small>المتوسط متوسط المدى:</small>
+                            <span class="${analysis.trend.shortMA > analysis.trend.mediumMA ? 'text-success' : 'text-danger'}">
+                                ${analysis.trend.mediumMA.toFixed(4)}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <small>المتوسط طويل المدى:</small>
+                            <span class="${analysis.trend.mediumMA > analysis.trend.longMA ? 'text-success' : 'text-danger'}">
+                                ${analysis.trend.longMA.toFixed(4)}
+                            </span>
+                        </div>
+                        <div class="progress mt-3">
+                            <div class="progress-bar bg-${analysis.trend.strength > 70 ? 'success' : analysis.trend.strength > 40 ? 'warning' : 'danger'}" 
+                                 style="width: ${analysis.trend.strength}%">
+                                قوة الاتجاه: ${analysis.trend.strength}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h6>الدعم والمقاومة</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong class="text-danger">مقاومة:</strong><br>
+                                ${analysis.support_resistance.resistance.slice(0, 3).map(r => 
+                                    `<small class="d-block">${r.toFixed(4)}</small>`
+                                ).join('')}
+                            </div>
+                            <div class="col-6">
+                                <strong class="text-success">دعم:</strong><br>
+                                ${analysis.support_resistance.support.slice(0, 3).map(s => 
+                                    `<small class="d-block">${s.toFixed(4)}</small>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // عرض باقي التفاصيل
+            displayWaveDetails(analysis.waves);
+            displayFibonacciLevels(analysis.fibonacci);
+            displayDetectedPatterns(analysis.patterns);
+            displayAdvancedRecommendations(analysis.predictions, summary);
+        }
+
+        // إضافة أزرار التحكم الإضافية
+        function addControlButtons() {
+            const controlsHTML = `
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="btn-group me-2" role="group">
+                            <button type="button" class="btn btn-outline-primary" onclick="toggleTheme()" id="themeToggle">
+                                <i class="fas fa-moon"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="showAlertManager()">
+                                <i class="fas fa-bell"></i>
+                                التنبيهات
+                            </button>
+                            <button type="button" class="btn btn-outline-success" onclick="exportAnalysis()">
+                                <i class="fas fa-download"></i>
+                                تصدير
+                            </button>
+                        </div>
+                        
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-warning" onclick="showSettings()">
+                                <i class="fas fa-cog"></i>
+                                الإعدادات
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="showHelp()">
+                                <i class="fas fa-question-circle"></i>
+                                مساعدة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.querySelector('.container').insertAdjacentHTML('afterbegin', controlsHTML);
+        }
+
+        // تصدير التحليل
+        function exportAnalysis() {
+            const lastAnalysis = app.analysisHistory[app.analysisHistory.length - 1];
+            if (!lastAnalysis) {
+                alert('لا يوجد تحليل للتصدير');
+                return;
+            }
+            
+            const exportData = {
+                symbol: lastAnalysis.symbol,
+                interval: lastAnalysis.interval,
+                timestamp: new Date().toISOString(),
+                analysis: lastAnalysis.analysis,
+                summary: lastAnalysis.summary
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `elliott-wave-analysis-${lastAnalysis.symbol}-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        // إظهار الإعدادات
+        function showSettings() {
+            const settingsHTML = `
+                <div class="modal fade" id="settingsModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-cog"></i>
+                                    الإعدادات
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="settingsForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">الرمز الافتراضي</label>
+                                        <input type="text" class="form-control" id="defaultSymbol" value="${document.getElementById('symbolInput').value}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">الفترة الافتراضية</label>
+                                        <select class="form-select" id="defaultInterval">
+                                            <option value="1h">ساعة واحدة</option>
+                                            <option value="4h" selected>4 ساعات</option>
+                                            <option value="1d">يوم واحد</option>
+                                            <option value="1w">أسبوع واحد</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">عدد الشموع الافتراضي</label>
+                                        <select class="form-select" id="defaultLimit">
+                                            <option value="100">100</option>
+                                            <option value="200" selected>200</option>
+                                            <option value="500">500</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="autoRefresh">
+                                            <label class="form-check-label" for="autoRefresh">
+                                                التحديث التلقائي (كل 5 دقائق)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="soundAlerts">
+                                            <label class="form-check-label" for="soundAlerts">
+                                                                                            <label class="form-check-label" for="soundAlerts">
+                                                تفعيل الأصوات للتنبيهات
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">حساسية اكتشاف الموجات</label>
+                                        <input type="range" class="form-range" id="waveSensitivity" min="1" max="10" value="5">
+                                        <div class="d-flex justify-content-between">
+                                            <small>منخفضة</small>
+                                            <small>عالية</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">مستوى الثقة الأدنى</label>
+                                        <input type="range" class="form-range" id="minConfidence" min="30" max="90" value="50">
+                                        <div class="d-flex justify-content-between">
+                                            <small>30%</small>
+                                            <small>90%</small>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" onclick="saveUserSettings()">حفظ الإعدادات</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', settingsHTML);
+            const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
+            modal.show();
+            
+            document.getElementById('settingsModal').addEventListener('hidden.bs.modal', function () {
+                this.remove();
+            });
+        }
+
+        // حفظ إعدادات المستخدم
+        function saveUserSettings() {
+            const settings = {
+                defaultSymbol: document.getElementById('defaultSymbol').value,
+                defaultInterval: document.getElementById('defaultInterval').value,
+                defaultLimit: document.getElementById('defaultLimit').value,
+                autoRefresh: document.getElementById('autoRefresh').checked,
+                soundAlerts: document.getElementById('soundAlerts').checked,
+                waveSensitivity: document.getElementById('waveSensitivity').value,
+                minConfidence: document.getElementById('minConfidence').value
+            };
+            
+            localStorage.setItem('elliottWaveUserSettings', JSON.stringify(settings));
+            
+            // تطبيق الإعدادات
+            document.getElementById('symbolInput').value = settings.defaultSymbol;
+            document.getElementById('intervalSelect').value = settings.defaultInterval;
+            document.getElementById('limitSelect').value = settings.defaultLimit;
+            
+            // إعداد التحديث التلقائي
+            if (settings.autoRefresh) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+            
+            // إغلاق النافذة
+            bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+            
+            // إظهار رسالة نجاح
+            showNotification('تم حفظ الإعدادات بنجاح', 'success');
+        }
+
+        // التحديث التلقائي
+        let autoRefreshInterval = null;
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) return;
+            
+            autoRefreshInterval = setInterval(() => {
+                if (document.getElementById('symbolInput').value) {
+                    analyzeAdvanced();
+                }
+            }, 5 * 60 * 1000); // كل 5 دقائق
+            
+            showNotification('تم تفعيل التحديث التلقائي', 'info');
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                showNotification('تم إيقاف التحديث التلقائي', 'info');
+            }
+        }
+
+        // إظهار المساعدة
+        function showHelp() {
+            const helpHTML = `
+                <div class="modal fade" id="helpModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-question-circle"></i>
+                                    دليل الاستخدام
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="accordion" id="helpAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#help1">
+                                                ما هي نظرية Elliott Wave؟
+                                            </button>
+                                        </h2>
+                                        <div id="help1" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                                            <div class="accordion-body">
+                                                نظرية Elliott Wave هي أداة تحليل فني تعتمد على فكرة أن أسعار الأسواق المالية تتحرك في دورات متكررة من 5 موجات في الاتجاه الرئيسي و 3 موجات تصحيحية.
+                                                <br><br>
+                                                <strong>الموجات الدافعة (1, 3, 5):</strong> تتحرك مع الاتجاه الرئيسي
+                                                <br>
+                                                <strong>الموجات التصحيحية (2, 4):</strong> تتحرك ضد الاتجاه الرئيسي
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help2">
+                                                كيفية استخدام المحلل
+                                            </button>
+                                        </h2>
+                                        <div id="help2" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                            <div class="accordion-body">
+                                                <ol>
+                                                    <li>أدخل رمز العملة المشفرة (مثل BTCUSDT)</li>
+                                                    <li>اختر الفترة الزمنية المناسبة</li>
+                                                    <li>حدد عدد الشموع للتحليل</li>
+                                                    <li>اضغط على "تحليل متقدم" للحصول على النتائج</li>
+                                                    <li>استخدم "مسح السوق" لفحص عدة عملات</li>
+                                                </ol>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help3">
+                                                فهم مستويات الثقة
+                                            </button>
+                                        </h2>
+                                        <div id="help3" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                            <div class="accordion-body">
+                                                <div class="alert alert-success">
+                                                    <strong>عالية (70%+):</strong> إشارات قوية وموثوقة
+                                                </div>
+                                                <div class="alert alert-warning">
+                                                    <strong>متوسطة (50-70%):</strong> إشارات معتدلة تحتاج تأكيد
+                                                </div>
+                                                <div class="alert alert-danger">
+                                                    <strong>منخفضة (أقل من 50%):</strong> إشارات ضعيفة، تداول بحذر
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help4">
+                                                المؤشرات الفنية المستخدمة
+                                            </button>
+                                        </h2>
+                                        <div id="help4" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                            <div class="accordion-body">
+                                                <ul>
+                                                    <li><strong>RSI:</strong> مؤشر القوة النسبية (تشبع شراء/بيع)</li>
+                                                    <li><strong>MACD:</strong> تقارب وتباعد المتوسطات المتحركة</li>
+                                                    <li><strong>Bollinger Bands:</strong> نطاقات بولينجر</li>
+                                                    <li><strong>Stochastic:</strong> مذبذب عشوائي</li>
+                                                    <li><strong>Fibonacci:</strong> مستويات فيبوناتشي</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#help5">
+                                                إدارة المخاطر
+                                            </button>
+                                        </h2>
+                                        <div id="help5" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                            <div class="accordion-body">
+                                                <div class="alert alert-warning">
+                                                    <strong>تحذير:</strong> هذا المحلل أداة مساعدة فقط وليس نصيحة استثمارية
+                                                </div>
+                                                <ul>
+                                                    <li>لا تستثمر أكثر مما يمكنك تحمل خسارته</li>
+                                                    <li>استخدم وقف الخسارة دائماً</li>
+                                                    <li>نوع محفظتك الاستثمارية</li>
+                                                    <li>اطلب المشورة من خبير مالي</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">فهمت</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', helpHTML);
+            const modal = new bootstrap.Modal(document.getElementById('helpModal'));
+            modal.show();
+            
+            document.getElementById('helpModal').addEventListener('hidden.bs.modal', function () {
+                this.remove();
+            });
+        }
+
+        // إظهار الإشعارات
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // تحميل الإعدادات المحفوظة
+        function loadUserSettings() {
+            const savedSettings = localStorage.getItem('elliottWaveUserSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                if (settings.autoRefresh) {
+                    startAutoRefresh();
+                }
+                
+                // تطبيق الإعدادات على المحلل
+                if (app.analyzer) {
+                    app.analyzer.sensitivity = parseInt(settings.waveSensitivity) || 5;
+                    app.analyzer.minConfidence = parseInt(settings.minConfidence) || 50;
+                }
+            }
+        }
+
+        // إضافة معلومات الحالة
+        function addStatusBar() {
+            const statusHTML = `
+                <div class="fixed-bottom bg-dark text-white p-2" id="statusBar" style="font-size: 0.8rem;">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <span id="connectionStatus">
+                                    <i class="fas fa-circle text-success"></i>
+                                    متصل
+                                </span>
+                            </div>
+                            <div class="col-md-3">
+                                <span id="lastUpdate">
+                                    آخر تحديث: --
+                                </span>
+                            </div>
+                            <div class="col-md-3">
+                                <span id="analysisCount">
+                                    التحليلات: 0
+                                </span>
+                            </div>
+                            <div class="col-md-3">
+                                <span id="activeAlerts">
+                                    التنبيهات: ${alertManager.getActiveAlerts().length}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', statusHTML);
+        }
+
+        // تحديث شريط الحالة
+        function updateStatusBar() {
+            const lastUpdateEl = document.getElementById('lastUpdate');
+            const analysisCountEl = document.getElementById('analysisCount');
+            const activeAlertsEl = document.getElementById('activeAlerts');
+            
+            if (lastUpdateEl) {
+                lastUpdateEl.textContent = `آخر تحديث: ${new Date().toLocaleTimeString('ar-SA')}`;
+            }
+            if (analysisCountEl) {
+                analysisCountEl.textContent = `التحليلات: ${app.analysisHistory.length}`;
+            }
+            
+            if (activeAlertsEl) {
+                activeAlertsEl.textContent = `التنبيهات: ${alertManager.getActiveAlerts().length}`;
+            }
+        }
+
+        // إضافة ميزة المقارنة بين العملات
+        function showComparisonTool() {
+            const comparisonHTML = `
+                <div class="modal fade" id="comparisonModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-balance-scale"></i>
+                                    مقارنة العملات
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control" id="comparisonSymbols" 
+                                               placeholder="أدخل رموز العملات مفصولة بفاصلة (مثل: BTCUSDT,ETHUSDT,ADAUSDT)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-primary" onclick="startComparison()">
+                                            <i class="fas fa-play"></i>
+                                            بدء المقارنة
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="comparisonResults">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                        <p>أدخل رموز العملات لبدء المقارنة</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', comparisonHTML);
+            const modal = new bootstrap.Modal(document.getElementById('comparisonModal'));
+            modal.show();
+            
+            document.getElementById('comparisonModal').addEventListener('hidden.bs.modal', function () {
+                this.remove();
+            });
+        }
+
+        // تنفيذ المقارنة
+        async function startComparison() {
+            const symbolsInput = document.getElementById('comparisonSymbols').value;
+            const symbols = symbolsInput.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+            
+            if (symbols.length < 2) {
+                showNotification('يجب إدخال عملتين على الأقل للمقارنة', 'warning');
+                return;
+            }
+            
+            const resultsContainer = document.getElementById('comparisonResults');
+            resultsContainer.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحليل...</span>
+                    </div>
+                    <p class="mt-2">جاري تحليل ${symbols.length} عملة...</p>
+                </div>
+            `;
+            
+            const comparisons = [];
+            
+            for (const symbol of symbols) {
+                try {
+                    const result = await app.analyzeSymbol(symbol, '4h', 200);
+                    if (result.success) {
+                        comparisons.push({
+                            symbol,
+                            analysis: result.analysis,
+                            summary: result.summary
+                        });
+                    }
+                } catch (error) {
+                    console.error(`خطأ في تحليل ${symbol}:`, error);
+                }
+            }
+            
+            displayComparisonResults(comparisons);
+        }
+
+        // عرض نتائج المقارنة
+        function displayComparisonResults(comparisons) {
+            if (comparisons.length === 0) {
+                document.getElementById('comparisonResults').innerHTML = `
+                    <div class="alert alert-danger">
+                        لم يتم العثور على بيانات صالحة للمقارنة
+                    </div>
+                `;
+                return;
+            }
+            
+            // ترتيب حسب مستوى الثقة
+            comparisons.sort((a, b) => (b.analysis.enhancedConfidence || b.analysis.confidence) - (a.analysis.enhancedConfidence || a.analysis.confidence));
+            
+            const comparisonHTML = `
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>العملة</th>
+                                <th>مستوى الثقة</th>
+                                <th>الاتجاه</th>
+                                <th>قوة الاتجاه</th>
+                                <th>التوصية</th>
+                                <th>المخاطرة</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${comparisons.map((comp, index) => `
+                                <tr class="${index === 0 ? 'table-success' : ''}">
+                                    <td>
+                                        <strong>${comp.symbol}</strong>
+                                        ${index === 0 ? '<span class="badge bg-success ms-2">الأفضل</span>' : ''}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="width: 80px;">
+                                            <div class="progress-bar bg-${getConfidenceColor(comp.analysis.enhancedConfidence || comp.analysis.confidence)}" 
+                                                 style="width: ${comp.analysis.enhancedConfidence || comp.analysis.confidence}%">
+                                                ${(comp.analysis.enhancedConfidence || comp.analysis.confidence).toFixed(0)}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-${comp.analysis.trend.direction.includes('bullish') ? 'success' : 'danger'}">
+                                            ${comp.analysis.trend.direction}
+                                        </span>
+                                    </td>
+                                    <td>${comp.analysis.trend.strength}%</td>
+                                    <td>
+                                        <span class="badge bg-${getRecommendationColor(comp.summary.recommendation)}">
+                                            ${comp.summary.recommendation}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-${getRiskColor(comp.summary.riskLevel)}">
+                                            ${comp.summary.riskLevel}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="loadSymbolForAnalysis('${comp.symbol}')">
+                                            تحليل مفصل
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6>ملخص المقارنة:</h6>
+                        <div class="alert alert-info">
+                            <ul class="mb-0">
+                                <li><strong>أفضل فرصة:</strong> ${comparisons[0].symbol} بثقة ${(comparisons[0].analysis.enhancedConfidence || comparisons[0].analysis.confidence).toFixed(0)}%</li>
+                                <li><strong>متوسط الثقة:</strong> ${(comparisons.reduce((sum, c) => sum + (c.analysis.enhancedConfidence || c.analysis.confidence), 0) / comparisons.length).toFixed(0)}%</li>
+                                <li><strong>العملات الصاعدة:</strong> ${comparisons.filter(c => c.analysis.trend.direction.includes('bullish')).length} من ${comparisons.length}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('comparisonResults').innerHTML = comparisonHTML;
+        }
+
+        // تحميل عملة للتحليل المفصل
+        function loadSymbolForAnalysis(symbol) {
+            document.getElementById('symbolInput').value = symbol;
+            bootstrap.Modal.getInstance(document.getElementById('comparisonModal')).hide();
+            analyzeAdvanced();
+        }
+
+        // دوال مساعدة للألوان
+        function getConfidenceColor(confidence) {
+            if (confidence >= 70) return 'success';
+            if (confidence >= 50) return 'warning';
+            return 'danger';
+        }
+
+        function getRiskColor(riskLevel) {
+            switch (riskLevel) {
+                case 'منخفضة': return 'success';
+                case 'متوسطة': return 'warning';
+                case 'عالية': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        // إضافة ميزة التنبؤات المتقدمة
+        class PredictionEngine {
+            static generatePredictions(analysis, data) {
+                const predictions = {
+                    shortTerm: this.predictShortTerm(analysis, data),
+                    mediumTerm: this.predictMediumTerm(analysis, data),
+                    longTerm: this.predictLongTerm(analysis, data),
+                    scenarios: this.generateScenarios(analysis, data)
+                };
+                
+                return predictions;
+            }
+
+            static predictShortTerm(analysis, data) {
+                const currentPrice = data[data.length - 1].close;
+                const trend = analysis.trend;
+                
+                let targetPrice, probability;
+                
+                if (trend.direction.includes('bullish')) {
+                    targetPrice = currentPrice * (1 + (trend.strength / 1000));
+                    probability = Math.min(trend.strength + 20, 85);
+                } else {
+                    targetPrice = currentPrice * (1 - (trend.strength / 1000));
+                    probability = Math.min(trend.strength + 15, 80);
+                }
+                
+                return {
+                    timeframe: '24 ساعة',
+                    targetPrice: targetPrice.toFixed(4),
+                    currentPrice: currentPrice.toFixed(4),
+                    change: (((targetPrice - currentPrice) / currentPrice) * 100).toFixed(2),
+                    probability: probability.toFixed(0),
+                    confidence: analysis.confidence
+                };
+            }
+
+            static predictMediumTerm(analysis, data) {
+                const currentPrice = data[data.length - 1].close;
+                const fibLevels = analysis.fibonacci;
+                
+                let targetPrice;
+                if (analysis.trend.direction.includes('bullish')) {
+                    targetPrice = fibLevels.extensions[1] || currentPrice * 1.15;
+                } else {
+                    targetPrice = fibLevels.retracements[2] || currentPrice * 0.85;
+                }
+                
+                return {
+                    timeframe: 'أسبوع واحد',
+                    targetPrice: targetPrice.toFixed(4),
+                    currentPrice: currentPrice.toFixed(4),
+                    change: (((targetPrice - currentPrice) / currentPrice) * 100).toFixed(2),
+                    probability: Math.max(analysis.confidence - 10, 30).toFixed(0),
+                    confidence: analysis.confidence
+                };
+            }
+
+            static predictLongTerm(analysis, data) {
+                const currentPrice = data[data.length - 1].close;
+                const waveCount = analysis.waves.length;
+                
+                let multiplier = 1;
+                if (waveCount >= 5) {
+                    multiplier = analysis.trend.direction.includes('bullish') ? 1.3 : 0.7;
+                } else {
+                    multiplier = analysis.trend.direction.includes('bullish') ? 1.2 : 0.8;
+                }
+                
+                const targetPrice = currentPrice * multiplier;
+                
+                return {
+                    timeframe: 'شهر واحد',
+                    targetPrice: targetPrice.toFixed(4),
+                    currentPrice: currentPrice.toFixed(4),
+                    change: (((targetPrice - currentPrice) / currentPrice) * 100).toFixed(2),
+                    probability: Math.max(analysis.confidence - 20, 25).toFixed(0),
+                    confidence: analysis.confidence
+                };
+            }
+
+            static generateScenarios(analysis, data) {
+                const currentPrice = data[data.length - 1].close;
+                
+                return {
+                    bullish: {
+                        name: 'السيناريو الصاعد',
+                        probability: analysis.trend.direction.includes('bullish') ? 65 : 35,
+                        target: (currentPrice * 1.25).toFixed(4),
+                        description: 'كسر مستويات المقاومة وتأكيد الاتجاه الصاعد'
+                    },
+                    bearish: {
+                        name: 'السيناريو الهابط',
+                        probability: analysis.trend.direction.includes('bearish') ? 65 : 35,
+                        target: (currentPrice * 0.75).toFixed(4),
+                        description: 'كسر مستويات الدعم وتأكيد الاتجاه الهابط'
+                    },
+                    sideways: {
+                        name: 'السيناريو الجانبي',
+                        probability: 30,
+                        target: currentPrice.toFixed(4),
+                        description: 'حركة جانبية بين مستويات الدعم والمقاومة'
+                    }
+                };
+            }
+        }
+
+        // تحديث عرض التوقعات
+        function displayPredictions(predictions) {
+            if (!predictions) return '';
+            
+            return `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-crystal-ball"></i> التنبؤات المتقدمة</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <small>${predictions.shortTerm.timeframe}</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-center">
+                                            <h6>${predictions.shortTerm.targetPrice}</h6>
+                                            <span class="badge bg-${predictions.shortTerm.change > 0 ? 'success' : '
+                                            <span class="badge bg-${predictions.shortTerm.change > 0 ? 'success' : 'danger'}">
+                                                ${predictions.shortTerm.change}%
+                                            </span>
+                                            <div class="mt-2">
+                                                <small>احتمالية: ${predictions.shortTerm.probability}%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <small>${predictions.mediumTerm.timeframe}</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-center">
+                                            <h6>${predictions.mediumTerm.targetPrice}</h6>
+                                            <span class="badge bg-${predictions.mediumTerm.change > 0 ? 'success' : 'danger'}">
+                                                ${predictions.mediumTerm.change}%
+                                            </span>
+                                            <div class="mt-2">
+                                                <small>احتمالية: ${predictions.mediumTerm.probability}%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <small>${predictions.longTerm.timeframe}</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="text-center">
+                                            <h6>${predictions.longTerm.targetPrice}</h6>
+                                            <span class="badge bg-${predictions.longTerm.change > 0 ? 'success' : 'danger'}">
+                                                ${predictions.longTerm.change}%
+                                            </span>
+                                            <div class="mt-2">
+                                                <small>احتمالية: ${predictions.longTerm.probability}%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <h6>السيناريوهات المحتملة:</h6>
+                                <div class="row">
+                                    ${Object.entries(predictions.scenarios).map(([key, scenario]) => `
+                                        <div class="col-md-4">
+                                            <div class="alert alert-${key === 'bullish' ? 'success' : key === 'bearish' ? 'danger' : 'secondary'} p-2">
+                                                <strong>${scenario.name}</strong><br>
+                                                <small>الهدف: ${scenario.target}</small><br>
+                                                <small>الاحتمالية: ${scenario.probability}%</small><br>
+                                                <small class="text-muted">${scenario.description}</small>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // تحديث المحلل المحسن لإضافة التنبؤات
+        class FinalElliottWaveAnalyzer extends EnhancedElliottWaveAnalyzer {
+            analyzeData(data) {
+                const baseAnalysis = super.analyzeData(data);
+                
+                // إضافة التنبؤات
+                const predictions = PredictionEngine.generatePredictions(baseAnalysis, data);
+                
+                return {
+                    ...baseAnalysis,
+                    predictions
+                };
+            }
+        }
+
+        // تحديث التطبيق لاستخدام المحلل النهائي
+        app.analyzer = new FinalElliottWaveAnalyzer();
+
+        // تحديث د
+
+
+
