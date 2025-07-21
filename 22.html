@@ -3349,7 +3349,7 @@
         }
 
         // تحديث عرض التوقعات
-       // تحديث عرض التوقعات        
+// إصلاح السطر المقطوع في دالة displayPredictions
 function displayPredictions(predictions) {
     if (!predictions) return '';
                     
@@ -3378,6 +3378,68 @@ function displayPredictions(predictions) {
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <small>${predictions.mediumTerm.timeframe}</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center">
+                                    <h6>${predictions.mediumTerm.targetPrice}</h6>
+                                    <span class="badge bg-${predictions.mediumTerm.change > 0 ? 'success' : 'danger'}">
+                                        ${predictions.mediumTerm.change}%
+                                    </span>
+                                    <div class="mt-2">
+                                        <small>احتمالية: ${predictions.mediumTerm.probability}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white">
+                                <small>${predictions.longTerm.timeframe}</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center">
+                                    <h6>${predictions.longTerm.targetPrice}</h6>
+                                    <span class="badge bg-${predictions.longTerm.change > 0 ? 'success' : 'danger'}">
+                                        ${predictions.longTerm.change}%
+                                    </span>
+                                    <div class="mt-2">
+                                        <small>احتمالية: ${predictions.longTerm.probability}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6>السيناريوهات المحتملة:</h6>
+                        <div class="row">
+                            ${Object.entries(predictions.scenarios).map(([key, scenario]) => `
+                                <div class="col-md-4">
+                                    <div class="alert alert-${key === 'bullish' ? 'success' : key === 'bearish' ? 'danger' : 'secondary'} p-2">
+                                        <strong>${scenario.name}</strong><br>
+                                        <small>الهدف: ${scenario.target}</small><br>
+                                        <small>الاحتمالية: ${scenario.probability}%</small><br>
+                                        <small class="text-muted">${scenario.description}</small>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
                                             
                     <div class="col-md-4">
                         <div class="card border-warning">
